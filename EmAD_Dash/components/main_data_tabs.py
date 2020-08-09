@@ -11,6 +11,8 @@ from dash.dependencies import Input, Output, State
 ''' Defining the Data generator interface '''
 
 ''' A- Define the Generate data card '''
+label_width = 5
+input_width = 6
 select_generator = html.Div([
     dcc.Dropdown(
         id='select-generator',
@@ -23,32 +25,32 @@ select_generator = html.Div([
 ])
 
 n_train_form = dbc.FormGroup(
-    [dbc.Label("Training Samples:", html_for="training_samples", width=6,),
-    dbc.Col(dbc.Input(type="number", id="n_train", value=1000, step=100,),width=4,className="m-1"),],
+    [dbc.Label("Training Samples:", html_for="training_samples", width=label_width,),
+    dbc.Col(dbc.Input(type="number", id="n_train", value=1000, step=100,),width=input_width,className="m-1"),],
     row=True)
 
 n_test_form = dbc.FormGroup(
-    [dbc.Label("Testing Samples:", html_for="testing_samples", width=6,),
-    dbc.Col(dbc.Input(type="number", id="n_test", value=500, step=100,),width=4,className="m-1"),],
+    [dbc.Label("Testing Samples:", html_for="testing_samples", width=label_width,),
+    dbc.Col(dbc.Input(type="number", id="n_test", value=500, step=100,),width=input_width,className="m-1"),],
     row=True,)
 
 n_features_form = dbc.FormGroup(
-    [dbc.Label("Features:", html_for="features_samples", width=6,),
-    dbc.Col(dbc.Input(type="number", id="n_features", value=2, step=1,),width=4,className="m-1"),],
+    [dbc.Label("Features:", html_for="features_samples", width=label_width,),
+    dbc.Col(dbc.Input(type="number", id="n_features", value=2, step=1,),width=input_width,className="m-1"),],
     row=True,)
 
 n_clusters_form = dbc.FormGroup(
-    [dbc.Label("Clusters:", html_for="clusters_samples", width=6,),
-    dbc.Col(dbc.Input(type="number", id="n_clusters", value=2, step=1,),width=4,className="m-1"),],
+    [dbc.Label("Clusters:", html_for="clusters_samples", width=label_width,),
+    dbc.Col(dbc.Input(type="number", id="n_clusters", value=2, step=1,),width=input_width,className="m-1"),],
     row=True,)
 
 offset_form = dbc.FormGroup(
-    [dbc.Label("Offset:", html_for="offset_samples", width=6,),
-    dbc.Col(dbc.Input(type="number", id="offset", value=10, step=1,),width=4,className="m-1"),],
+    [dbc.Label("Offset:", html_for="offset_samples", width=label_width,),
+    dbc.Col(dbc.Input(type="number", id="offset", value=10, step=1,),width=input_width,className="m-1"),],
     row=True,)
 
 contamination_form = dbc.FormGroup(
-    [dbc.Label("Contamination:", html_for="contamination_samples", width=4,),
+    [dbc.Label("Contamination:", html_for="contamination_samples", width=label_width,),
     dbc.Col(dcc.Slider(id='contamination',min=0.001,max=0.2,
     step=0.01,
     marks={
@@ -59,8 +61,8 @@ contamination_form = dbc.FormGroup(
     value=0.1,
     tooltip={'placement':'top'}
     )
-    ,width=7,
-    className="m-1"),],
+    ,width=input_width,
+    className="t-1"),],
     row=True,)
 
 button_form = dbc.FormGroup([
@@ -82,44 +84,56 @@ select_generator,
 html.Hr(),
 generate_form,
 ],body=True,
-className="m-3")
+className="mt-3")
 
-generate_container = dbc.Row(generate_card,form=True, className="col-6 mx-auto")
 ''' A- Define the Generate data card '''
 
+''' B- Generate the Graphs Card'''
+data_graphs_div=html.Div([dbc.Tabs(
+        [
+            dbc.Tab(label="Scatter", tab_id="scatter"),
+            dbc.Tab(label="Histograms", tab_id="histogram"),
+            dbc.Tab(label="Table", tab_id="table"),
+        ],
+        id="data-graph-tabs",
+        active_tab="scatter",
+        ),
+        html.Div(id="data-graph-tab-content", className="p-0"),
+        ],#body=True,
+        className="mt-3"),
 
+''' B- Generate the Graphs Card'''
 
 
 
 ''' Defining the Data generator interface '''
 
-taps_with_graphs = dbc.Container(
+taps_with_graphs = html.Div(
     [
         # dcc.Store(id="store"),
         html.H1("1- Data Preparation"),
-
-        dbc.Tabs(
-            [
-                dbc.Tab(label="Generate", tab_id="generate"),
-                dbc.Tab(label="Load", tab_id="load"),
-            ],
-            id="data-tabs",
-            active_tab="generate",
-        ),
-
-        html.Div(id="data-tab-content", children="Test"),
-        # html.Hr(),
         dbc.Card([
-        dbc.Tabs(
-            [
-                dbc.Tab(label="Scatter", tab_id="scatter"),
-                dbc.Tab(label="Histograms", tab_id="histogram"),
-            ],
-            id="data-graph-tabs",
-            active_tab="scatter",
-        ),
-        html.Div(id="data-graph-tab-content", className="p-4"),
-        ],body=True),
+        dbc.CardHeader(
+                dbc.Tabs(
+                    [
+                        dbc.Tab(label="Generate", tab_id="generate",),
+                        dbc.Tab(label="Load", tab_id="load"),
+                    ],
+                    id="data-tabs",
+                    active_tab="generate",
+                    card=True 
+                )
+        ), dbc.CardBody(
+        html.Div(id="data-tab-content", children="Test")
+        )
+        ])
+
+
+
+        # html.Div(id="data-tab-content", children="Test"),
+        # dbc.Card(id="data-tab-content", body=True),
+        # html.Hr(),
+
 
     ]
 )
@@ -173,26 +187,25 @@ def data_tabs_callbacks(app):
 
         if active_tab is not None:
             if active_tab == "scatter":
-                dbc.Card
                 return dcc.Graph(figure=scatter)
             elif active_tab == "histogram":
-                return dbc.Row(
-                    [
-                        dbc.Col(dcc.Graph(figure=hist_1), width=6),
-                        dbc.Col(dcc.Graph(figure=hist_2), width=6),
-                    ]
-                )
+                return dcc.Graph(figure=hist_1)
         return "No tab selected"
 
+    '''Data main tabs control'''
     @app.callback(
         Output("data-tab-content", "children"),
         [Input("data-tabs", "active_tab")]
     )
     def render_tab_content(active_tab):
-
         if active_tab is not None:
             if active_tab == "generate":
-                return generate_container
+                return dbc.Row([
+                dbc.Col(generate_card, width=4),
+                dbc.Col(data_graphs_div, width=8),
+                ])
             elif active_tab == "load":
                 return "Load"
+            elif active_tab == "table":
+                return "Table"
         return "No tab selected"
