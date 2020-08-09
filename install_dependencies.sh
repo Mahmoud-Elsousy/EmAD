@@ -34,3 +34,11 @@ pip install pyod -i https://www.piwheels.org/simple
 
 # 10- Start Jupyterlab for development
 # jupyter-lab --ip=* --allow-root --no-browser --port 9999
+
+# ADD RASPI Repository
+nano /etc/apt/sources.list
+
+deb http://archive.raspbian.org/raspbian buster main contrib non-free
+deb-src http://archive.raspbian.org/raspbian buster main contrib non-free
+
+wget https://archive.raspbian.org/raspbian.public.key -O - | sudo apt-key add -apt

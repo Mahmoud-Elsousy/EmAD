@@ -44,4 +44,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8888
 
+EXPOSE 9999
+
+
 # ENTRYPOINT ["jupyter-lab", "--ip=*", "--allow-root", "--no-browser"]
