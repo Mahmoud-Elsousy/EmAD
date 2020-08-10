@@ -56,7 +56,7 @@ sidebar = html.Div(
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content, dcc.Store(id="data_store")])
+app.layout = html.Div([dcc.Location(id="url"), sidebar, content, dcc.Store(id="generated_data_store"), dcc.Store(id="loaded_data_store")])
 
 
 # this callback uses the current pathname to set the active state of the

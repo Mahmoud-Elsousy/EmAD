@@ -4,12 +4,16 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table as dt
 import numpy as np
+import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 
-''' Defining the Data generator interface '''
+from components.data_functions import generate_data_simple, generate_data_clusters
 
+''' Defining the Data generator interface '''
+dcc.Store(id="refresh_figures")
 ''' A- Define the Generate data card '''
 label_width = 5
 input_width = 6
@@ -80,6 +84,8 @@ alert_data_generated = dbc.Alert(
 generate_form = dbc.Form([n_train_form, n_test_form, n_features_form, n_clusters_form, offset_form, contamination_form, button_form])
 generate_card=dbc.Card([
 alert_data_generated,
+html.H5("Generate Data", className="text-primary mx-auto"),
+html.Hr(),
 select_generator,
 html.Hr(),
 generate_form,
@@ -105,6 +111,99 @@ data_graphs_div=html.Div([dbc.Tabs(
 ''' B- Generate the Graphs Card'''
 
 
+''' C- Define the Load data card '''
+UPLOAD_STYLE= {
+    'width': '100%',
+    'height': '70px',
+    'lineHeight': '60px',
+    'borderWidth': '1px',
+    'borderStyle': 'dashed',
+    'borderRadius': '5px',
+    'textAlign': 'center',
+    'margin': '10px'
+}
+
+
+alert_data_loaded = dbc.Alert(
+            html.H5("Data Loaded Successfuly!"),
+            id="alert-data-loaded",
+            is_open=False,
+            duration=5000,
+        )
+
+
+radios_load = dbc.FormGroup(
+    [dbc.Label("Source", html_for="load_radio", width=label_width-2),
+    dbc.Col(
+        dbc.RadioItems(
+            id="load_radio",
+            options=[{"label": "Local File", "value": 1},
+                {"label": "Website", "value": 2},],
+        ),
+        width=input_width+2,),
+    ],row=True,
+)
+
+upload_box = dcc.Upload(id='upload-data',
+    children=html.Div(['Drag and Drop or ',html.A('Select Files')]),
+    style=UPLOAD_STYLE,
+    multiple=True,
+    className="btn btn-outline-primary mx-auto"
+)
+
+load_link_form = dbc.FormGroup(
+    [dbc.Label("Link:", html_for="load_link", width=label_width-2,
+    className="pl-4 pt-3", ),
+    dbc.Col(dbc.Input(type="url", id="load_link",placeholder="https://github..."),width=input_width+2,
+    className="pt-3"),],
+    row=True,)
+
+load_switches = dbc.Checklist(
+options=[{"label": "Check for NaN", "value": 1},
+{"label": "Generate Header", "value": 2},
+{"label": "Has Time stamp field", "value": 3},
+{"label": "Shuffel Data", "value": 4},
+],
+value=[1],
+id="load-switches",
+switch=True,)
+
+split_form = html.Div(dbc.FormGroup(
+    [dbc.Label("Training %:", html_for="split_data", width=label_width-1,className="pl-4"),
+    dbc.Col(dcc.Slider(id='split_data',min=0,max=100,
+    step=1,
+    marks={
+    0: '0',
+    50: '50',
+    100: '100'
+    },
+    value=70,
+    tooltip={'placement':'top'}
+    )
+    ,width=input_width+1,
+    className="pt-3"),],
+    row=True,),className="pt-3")
+
+load_card=dbc.Card([
+alert_data_loaded,
+html.H5("Load Data from file", className="text-primary mx-auto"),
+html.Hr(),
+upload_box,
+# html.Hr(),
+load_link_form,
+html.Hr(),
+load_switches,
+split_form,
+dbc.Button("Load File", id="load",  color="success",block=True, className="mx-2 mt-4")
+],body=True,
+className="mt-3")
+
+''' C- Define the Load data card '''
+
+''' D- Define the Upload functions '''
+
+''' D- Define the Upload functions '''
+
 
 ''' Defining the Data generator interface '''
 
@@ -120,20 +219,13 @@ taps_with_graphs = html.Div(
                         dbc.Tab(label="Load", tab_id="load"),
                     ],
                     id="data-tabs",
-                    active_tab="generate",
-                    card=True 
+                    active_tab="load",
+                    card=True
                 )
         ), dbc.CardBody(
         html.Div(id="data-tab-content", children="Test")
         )
         ])
-
-
-
-        # html.Div(id="data-tab-content", children="Test"),
-        # dbc.Card(id="data-tab-content", body=True),
-        # html.Hr(),
-
 
     ]
 )
@@ -152,29 +244,62 @@ def data_tabs_callbacks(app):
             return (False, 2)
 
     @app.callback(
-    [Output('data_store', 'data'),
+    [Output('generated_data_store', 'data'),
     Output('alert-data-generated', 'is_open')],
     [Input('generate', 'n_clicks')],
-    [State('n_train', 'value'),
+    [State('select-generator', 'value'),
+    State('n_train', 'value'),
     State('n_test', 'value'),
     State('n_features', 'value'),
     State('n_clusters', 'value'),
     State('offset', 'value'),
     State('contamination', 'value')]
     )
-    def generate_data(n,n_train, n_test, n_features,n_clusters,offset,contamination):
+    def generate_data(n, generator, n_train, n_test, n_features,n_clusters,offset,contamination):
         if n is None:
-            return {'temp':0}, False
+            raise PreventUpdate
         else:
-            return {'temp':0}, True
+            if generator =='simple':
+                data = generate_data_simple(n_train, n_test, n_features, contamination,offset)
+                return data, True
+
+            elif generator == 'clusters':
+                data = generate_data_clusters(n_train, n_test, n_clusters, n_features, contamination,offset)
+                return data, True
+
+            return {'loaded':False}, True
 
     '''Data Generation card callbacks'''
 
+    '''Data Load card callbacks'''
+    @app.callback(
+    [Output('loaded_data_store', 'data'),
+    Output('alert-data-loaded', 'is_open')],
+    [Input('load', 'n_clicks')],
+    [State('upload-data', 'contents'),
+    State('upload-data', 'filename'),
+    State('load_link', 'value'),
+    State('load-switches', 'value'),
+    State('split_data', 'value')]
+    )
+    def load_data(n,contents, file_name, file_link,switch_values, training_data_ratio):
+        if n is None:
+            raise PreventUpdate
+        else:
+            # TODO: load data from link
+            data = load_file_to_dict(contents, filename, training_data_ratio)
+
+            return data, True
+
+    '''Data Load card callbacks'''
+
     @app.callback(
         Output("data-graph-tab-content", "children"),
-        [Input("data-graph-tabs", "active_tab")]
+        [Input("data-graph-tabs", "active_tab")],
+        [State("loaded_data_store","data"),
+        State("generated_data_store","data"),]
     )
-    def render_tab_content(active_tab):
+    def render_tab_graphs(active_tab, loaded,generated):
 
         # generate 100 multivariate normal samples
         data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], 100)
@@ -185,11 +310,29 @@ def data_tabs_callbacks(app):
         hist_1 = go.Figure(data=[go.Histogram(x=data[:, 0])])
         hist_2 = go.Figure(data=[go.Histogram(x=data[:, 1])])
 
-        if active_tab is not None:
+        loaded = loaded or {'loaded':False}
+        generated = generated or {'loaded':False}
+
+        if (active_tab is not None):
+            if loaded['loaded']==True:
+                df = pd.DataFrame.from_dict(loaded['xtr'])
+                print(loaded['xtr'])
+            elif generated['loaded']==True:
+                df = pd.DataFrame.from_dict(generated['xtr'])
+            else:
+                return "No Data to represent!"
+
             if active_tab == "scatter":
                 return dcc.Graph(figure=scatter)
             elif active_tab == "histogram":
                 return dcc.Graph(figure=hist_1)
+            elif active_tab == "table":
+
+                return dt.DataTable(
+                id='table',
+                columns=[{"name": i, "id": i} for i in df.columns],
+                data=df.to_dict('records'),)
+
         return "No tab selected"
 
     '''Data main tabs control'''
@@ -205,7 +348,9 @@ def data_tabs_callbacks(app):
                 dbc.Col(data_graphs_div, width=8),
                 ])
             elif active_tab == "load":
-                return "Load"
-            elif active_tab == "table":
-                return "Table"
+                return dbc.Row([
+                dbc.Col(load_card, width=4),
+                dbc.Col(data_graphs_div, width=8),
+                ])
+
         return "No tab selected"
