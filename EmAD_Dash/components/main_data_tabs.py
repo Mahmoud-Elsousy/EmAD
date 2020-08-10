@@ -9,8 +9,9 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
-
-from components.data_functions import generate_data_simple, generate_data_clusters
+from dash.exceptions import PreventUpdate
+from components.data_functions import *#generate_data_simple, generate_data_clusters, DataStorage,load_file_to_df
+# import plotly.express as px
 
 ''' Defining the Data generator interface '''
 dcc.Store(id="refresh_figures")
@@ -97,12 +98,12 @@ className="mt-3")
 ''' B- Generate the Graphs Card'''
 data_graphs_div=html.Div([dbc.Tabs(
         [
-            dbc.Tab(label="Scatter", tab_id="scatter"),
-            dbc.Tab(label="Histograms", tab_id="histogram"),
             dbc.Tab(label="Table", tab_id="table"),
+            dbc.Tab(label="Scatter", tab_id="scatter"),
+            dbc.Tab(label="Line Plots", tab_id="line"),
         ],
         id="data-graph-tabs",
-        active_tab="scatter",
+        active_tab="table",
         ),
         html.Div(id="data-graph-tab-content", className="p-0"),
         ],#body=True,
@@ -145,9 +146,9 @@ radios_load = dbc.FormGroup(
 )
 
 upload_box = dcc.Upload(id='upload-data',
-    children=html.Div(['Drag and Drop or ',html.A('Select Files')]),
+    children=html.Div(id="upload_box_text",children=['Drag and Drop or ',html.A('Select Files')]),
     style=UPLOAD_STYLE,
-    multiple=True,
+    multiple=False,
     className="btn btn-outline-primary mx-auto"
 )
 
@@ -219,7 +220,7 @@ taps_with_graphs = html.Div(
                         dbc.Tab(label="Load", tab_id="load"),
                     ],
                     id="data-tabs",
-                    active_tab="load",
+                    active_tab="generate",
                     card=True
                 )
         ), dbc.CardBody(
@@ -287,7 +288,7 @@ def data_tabs_callbacks(app):
             raise PreventUpdate
         else:
             # TODO: load data from link
-            data = load_file_to_dict(contents, filename, training_data_ratio)
+            data = load_file_to_df(contents, file_name, training_data_ratio)
 
             return data, True
 
@@ -295,43 +296,38 @@ def data_tabs_callbacks(app):
 
     @app.callback(
         Output("data-graph-tab-content", "children"),
-        [Input("data-graph-tabs", "active_tab")],
-        [State("loaded_data_store","data"),
-        State("generated_data_store","data"),]
+        [Input("data-graph-tabs", "active_tab"),
+        Input("loaded_data_store", "data"),
+        Input("generated_data_store", "data")],
+        # [State("loaded_data_store","data"),
+        # State("generated_data_store","data"),]
     )
     def render_tab_graphs(active_tab, loaded,generated):
-
-        # generate 100 multivariate normal samples
-        data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], 100)
-
-        scatter = go.Figure(
-            data=[go.Scatter(x=data[:, 0], y=data[:, 1], mode="markers")]
-        )
-        hist_1 = go.Figure(data=[go.Histogram(x=data[:, 0])])
-        hist_2 = go.Figure(data=[go.Histogram(x=data[:, 1])])
 
         loaded = loaded or {'loaded':False}
         generated = generated or {'loaded':False}
 
         if (active_tab is not None):
-            if loaded['loaded']==True:
-                df = pd.DataFrame.from_dict(loaded['xtr'])
-                print(loaded['xtr'])
-            elif generated['loaded']==True:
-                df = pd.DataFrame.from_dict(generated['xtr'])
+            if loaded['loaded'] is True:
+                df = DataStorage.loaded_data['xtr']
+            elif generated['loaded'] is True:
+                df = DataStorage.loaded_data['xtr']
             else:
                 return "No Data to represent!"
 
             if active_tab == "scatter":
-                return dcc.Graph(figure=scatter)
-            elif active_tab == "histogram":
-                return dcc.Graph(figure=hist_1)
+                return dcc.Graph(figure=update_scatter_matrix())
+            elif active_tab == "line":
+                return dcc.Graph(figure=update_line_plots())
             elif active_tab == "table":
-
                 return dt.DataTable(
                 id='table',
                 columns=[{"name": i, "id": i} for i in df.columns],
-                data=df.to_dict('records'),)
+                data=df.to_dict('records'),
+                page_size=15,
+                style_cell={'textAlign': 'left'},
+                # fixed_rows={'headers': True},
+                )
 
         return "No tab selected"
 
@@ -354,3 +350,11 @@ def data_tabs_callbacks(app):
                 ])
 
         return "No tab selected"
+
+    @app.callback(
+        Output("upload_box_text", "children"),
+        [Input("upload_box", "contents")]
+    )
+    def display_file_name(filename):
+        print("called")
+        return html.h6(filename)
