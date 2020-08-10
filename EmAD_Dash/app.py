@@ -10,11 +10,12 @@ import plotly.graph_objs as go
 
 app = dash.Dash(external_stylesheets=[dbc.themes.MINTY])
 
-from  components.data_page import *
+# from components.data_page import *
+from components.model_page import *
 
 
 data_tabs_callbacks(app)
-
+model_tabs_callbacks(app)
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -56,7 +57,11 @@ sidebar = html.Div(
 
 content = html.Div(id="page-content", style=CONTENT_STYLE)
 
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content, dcc.Store(id="generated_data_store"), dcc.Store(id="loaded_data_store")])
+app.layout = html.Div([dcc.Location(id="url"), sidebar, content,
+dcc.Store(id="generated_data_store"),
+dcc.Store(id="trained_model_store"),
+dcc.Store(id="loaded_model_store"),
+dcc.Store(id="loaded_data_store")])
 
 
 # this callback uses the current pathname to set the active state of the
@@ -75,9 +80,9 @@ def toggle_active_links(pathname):
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def render_page_content(pathname):
     if pathname in ["/", "/page-1"]:
-        return taps_with_graphs
+        return data_page_container
     elif pathname == "/page-2":
-        return "TODO/ Model training"
+        return model_page_container
     elif pathname == "/page-3":
         return html.P("Oh cool, this is page 3!")
     # If the user tries to reach a different page, return a 404 message

@@ -4,12 +4,12 @@ import pandas as pd
 # random_state = np.random.RandomState(3)
 
 class DataStorage:
-    generated_data = False
-    loaded_data = False
+    loaded_data = None
+    model = None
 
 def update_scatter_matrix():
     fig = px.scatter_matrix(DataStorage.loaded_data['xtr'],title="Scatter matrix of the Data")
-    # fig.update_traces(diagonal_visible=False)
+    fig.update_traces(diagonal_visible=False)
     return fig
 
 def update_line_plots():
@@ -69,31 +69,6 @@ def generate_data_clusters(n_train, n_test, n_clusters, n_features, contaminatio
     return {'loaded':True}
 
 
-# def load_file_to_df(contents, filename, training_data_ratio):
-#     content_type, content_string = contents.split(',')
-#     decoded = base64.b64decode(content_string)
-#     try:
-#         if 'csv' in filename:
-#             # Assume that the user uploaded a CSV file
-#             df = pd.read_csv(
-#                 io.StringIO(decoded.decode('utf-8')))
-#         elif 'xls' in filename:
-#             # Assume that the user uploaded an excel file
-#             df = pd.read_excel(io.BytesIO(decoded))
-#     except Exception as e:
-#         print(e)
-#         return "file type not supported"
-#
-#     split_row = int((training_data_ratio/100)*df.shape[0])
-#     xtr = df[:split_row]
-#     xte = df[split_row:]
-#     data = {
-#     'xtr':xtr,
-#     'xte':xte,
-#     }
-#     DataStorage.loaded_data = data
-#     return {'loaded':True}
-
 
 def load_file_to_df(contents, filename, training_data_ratio):
     import pandas as pd
@@ -132,3 +107,35 @@ def load_file_to_df(contents, filename, training_data_ratio):
             print(e)
 
     return {'loaded':True}
+
+
+'''Training models'''
+def train_model_iforest(model_feature, contamination):
+    if DataStorage.loaded_data is not None:
+        from pyod.models.iforest import IForest
+        DataStorage.model = IForest(contamination=contamination)
+        DataStorage.model.fit(DataStorage.loaded_data['xtr'])
+        return {'trained':True}
+    else:
+        print("No data to train on")
+        return {'trained':False}
+
+def train_model_knn(model_feature, contamination):
+    if DataStorage.loaded_data is not None:
+        from pyod.models.knn import KNN
+        DataStorage.model = KNN(contamination=contamination)
+        DataStorage.model.fit(DataStorage.loaded_data['xtr'])
+        return {'trained':True}
+    else:
+        print("No data to train on")
+        return {'trained':False}
+
+def train_model_lof(n_neighbors, contamination):
+    if DataStorage.loaded_data is not None:
+        from pyod.models.lof import LOF
+        DataStorage.model = LOF(n_neighbors=n_neighbors, contamination=contamination)
+        DataStorage.model.fit(DataStorage.loaded_data['xtr'])
+        return {'trained':True}
+    else:
+        print("No data to train on")
+        return {'trained':False}

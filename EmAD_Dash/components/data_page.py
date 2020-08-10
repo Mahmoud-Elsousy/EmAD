@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-from components.data_functions import *#generate_data_simple, generate_data_clusters, DataStorage,load_file_to_df
+from components.emad_functions import *#generate_data_simple, generate_data_clusters, DataStorage,load_file_to_df
 # import plotly.express as px
 
 ''' Defining the Data generator interface '''
@@ -208,7 +208,7 @@ className="mt-3")
 
 ''' Defining the Data generator interface '''
 
-taps_with_graphs = html.Div(
+data_page_container = html.Div(
     [
         # dcc.Store(id="store"),
         html.H1("1- Data Preparation"),
