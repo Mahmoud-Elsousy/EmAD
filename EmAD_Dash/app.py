@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 
 app = dash.Dash(external_stylesheets=[dbc.themes.MINTY])
 
-from  components.main_data_tabs import *
+from  components.data_page import *
 
 
 data_tabs_callbacks(app)
@@ -44,7 +44,7 @@ sidebar = html.Div(
         dbc.Nav(
             [
                 dbc.NavLink("1. Data Preparation", href="/page-1", id="page-1-link"),
-                dbc.NavLink("2. Model Raining", href="/page-2", id="page-2-link"),
+                dbc.NavLink("2. Model Training", href="/page-2", id="page-2-link"),
                 dbc.NavLink("3. Deployment", href="/page-3", id="page-3-link"),
             ],
             vertical=True,
