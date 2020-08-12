@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-from components.emad_functions import *#generate_data_simple, generate_data_clusters, DataStorage,load_file_to_df
+from components.emad_functions import *
 # import plotly.express as px
 
 ''' Defining the Data generator interface '''
@@ -286,10 +286,14 @@ def data_tabs_callbacks(app):
     def load_data(n,contents, file_name, file_link,switch_values, training_data_ratio):
         if n is None:
             raise PreventUpdate
-        else:
+
+        elif file_name is not None:
             # TODO: load data from link
             data = load_file_to_df(contents, file_name, training_data_ratio)
+            return data, True
 
+        elif (file_link is not None) and (len(file_link.split('.')) > 1):
+            data = load_link_to_df(file_link, training_data_ratio)
             return data, True
 
     '''Data Load card callbacks'''
@@ -352,9 +356,22 @@ def data_tabs_callbacks(app):
         return "No tab selected"
 
     @app.callback(
-        Output("upload_box_text", "children"),
-        [Input("upload_box", "contents")]
-    )
-    def display_file_name(filename):
-        print("called")
-        return html.h6(filename)
+        [Output("upload_box_text", "children"),
+        Output("load", "disabled")],
+        [Input("upload-data", "filename"),
+        Input("load_link", "value")]
+    ) 
+    def display_file_name(filename, link_value):
+        load_text_content = ['Drag and Drop or ',html.A('Select Files')]
+        load_btn_disabled = True
+
+        if filename is not None:
+            load_text_content = html.P(filename, className="p-auto")
+            load_btn_disabled = False
+
+        # Just a basic check that the of the box is not empty and has at least a .
+        if (link_value is not None) and (len(link_value.split('.')) > 1):
+            load_btn_disabled = False
+
+        return load_text_content, load_btn_disabled
+ 

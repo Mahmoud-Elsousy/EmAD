@@ -4,8 +4,8 @@ import pandas as pd
 # random_state = np.random.RandomState(3)
 
 class DataStorage:
-    loaded_data = None
-    model = None
+    loaded_data = {}
+    model = {}
 
 def update_scatter_matrix():
     fig = px.scatter_matrix(DataStorage.loaded_data['xtr'],title="Scatter matrix of the Data")
@@ -105,6 +105,19 @@ def load_file_to_df(contents, filename, training_data_ratio):
                 DataStorage.loaded_data = data
         except Exception as e:
             print(e)
+
+    return {'loaded':True}
+
+
+def load_link_to_df(link,training_data_ratio):
+    import pandas as pd
+    df = pd.read_csv(link)
+    split_row = int((training_data_ratio/100)*df.shape[0])
+    xtr = df[:split_row]
+    xte = df[split_row:]
+    data = {'xtr':xtr,'xte':xte,}
+    DataStorage.loaded_data = data
+
 
     return {'loaded':True}
 
