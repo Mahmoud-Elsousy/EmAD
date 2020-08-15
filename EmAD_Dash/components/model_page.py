@@ -263,16 +263,27 @@ def model_tabs_callbacks(app):
     )
     def render_tab_content(active_tab):
         if active_tab is not None:
+            def one_third_two_thirds(one, two):
+                content = dbc.Container([
+                dbc.Row([
+                    dbc.Col(one, width=4),
+                    dbc.Col(two, width=8),
+                ]),
+                dbc.Row([
+                    dbc.Col(dbc.Button("1- Data Preparation",href="/page-1", id='btn_to_data', className="mx-auto p-2 btn-secondary", block=True,),
+                     width=4, className="ml-auto mt-4"),
+                    dbc.Col(dbc.Button(href="/page-3",disabled=True, id='btn_to_deployment', className="mx-auto p-2 btn-success", block=True,),
+                     width=4, className="mr-auto mt-4"),
+                ])
+                ])
+                return content
+
             if active_tab == "train":
-                return dbc.Row([
-                dbc.Col(train_card, width=4),
-                dbc.Col(html.Div(id="train_fig"), width=8),
-                ])
+                return one_third_two_thirds(train_card, html.Div(id="train_fig"))
+
             elif active_tab == "load":
-                return dbc.Row([
-                dbc.Col(test_card, width=4),
-                dbc.Col(data_graphs_div, width=8),
-                ])
+                return one_third_two_thirds(test_card, data_graphs_div)
+
 
         return "No tab selected"
 #
@@ -283,3 +294,14 @@ def model_tabs_callbacks(app):
 #     def display_file_name(filename):
 #         print("called")
 #         return html.h6(filename)
+
+    @app.callback(
+        [Output("btn_to_deployment", "children"),
+        Output("btn_to_deployment", "disabled")],
+        [Input("trained_model_store", "data")]
+    ) 
+    def activate_to_train_btn(data):
+        if (data is not None):
+            return "3- Deployment" , False
+        
+        return "Train a model to deploy!", True

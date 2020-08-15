@@ -5,10 +5,14 @@ import pandas as pd
 
 class DataStorage:
     loaded_data = {}
+    xtr = pd.DataFrame()
+    xte = pd.DataFrame()
+    ytr = pd.DataFrame()
+    yte = pd.DataFrame()
     model = {}
 
 def update_scatter_matrix():
-    fig = px.scatter_matrix(DataStorage.loaded_data['xtr'],title="Scatter matrix of the Data")
+    fig = px.scatter_matrix(DataStorage.loaded_data['xtr'],title="Scatter matrix of the Data", template="ggplot2", opacity=0.7)
     fig.update_traces(diagonal_visible=False)
     return fig
 
@@ -19,11 +23,22 @@ def update_line_plots():
     num_of_samples = DataStorage.loaded_data['xtr'].shape[0]
     titles = DataStorage.loaded_data['xtr'].columns
     fig = make_subplots(rows=num_of_features, cols=1)
+    # fig.layout.plot_bgcolor = #fff
+    
     for i in range(num_of_features):
         fig.add_trace(go.Scatter(x=list(range(0, num_of_samples)), y=DataStorage.loaded_data['xtr'][titles[i]]),row=i+1, col=1)
 
-    fig.update_layout(height=600, width=800, title_text="Feature line graphs")
+    fig.update_layout(height=600, width=800, title_text="Feature line graphs",template="ggplot2")
+    fig.layout.paper_bgcolor = 'rgba(220,220,220,0.3)'
     return fig
+
+
+def split_data_xy(x,y=None,raio,shuffle=False):
+    from sklearn.model_selection import train_test_split
+    if y is not None:
+        return train_test_split(x, y, test_size=(100-ratio)/100,shuffle=shuffle) # Returns: xtr, xte, ytr, yte
+    return train_test_split(x, test_size=(100-ratio)/100,shuffle=shuffle) # Returns: xtr, xte
+
 
 
 def numpy_to_df(xtr, xte, ytr, yte):
@@ -82,6 +97,7 @@ def load_file_to_df(contents, filename, training_data_ratio):
             if 'csv' in filename:
                 # Assume that the user uploaded a CSV file
                 df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                
 
                 split_row = int((training_data_ratio/100)*df.shape[0])
                 xtr = df[:split_row]

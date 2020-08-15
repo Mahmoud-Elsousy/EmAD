@@ -16,8 +16,8 @@ from components.emad_functions import *
 ''' Defining the Data generator interface '''
 dcc.Store(id="refresh_figures")
 ''' A- Define the Generate data card '''
-label_width = 5
-input_width = 6
+label_width = 6
+input_width = 5
 select_generator = html.Div([
     dcc.Dropdown(
         id='select-generator',
@@ -159,10 +159,44 @@ load_link_form = dbc.FormGroup(
     className="pt-3"),],
     row=True,)
 
+nan_radio = dbc.FormGroup(
+    [
+        dbc.Label("Missing values:"),
+        dbc.RadioItems(
+            options=[
+                {"label": "Ignore", "value": 1},
+                {"label": "Fill average", "value": 2},
+                {"label": "Fill 0", "value": 3},
+                {"label": "Delete Sample", "value": 4},
+            ],
+            value=1,
+            id="nan_radio",
+            className="px-3",
+            # inline=True,
+        ),
+        # dbc.Row(dbc.Col(dbc.Input(id="nan_fill_value", value=0, type="number"),width=5,className="ml-auto mr-3")),
+    ]
+)
+
+label_radio = dbc.FormGroup(
+    [
+        dbc.Label("Label Column:"),
+        dbc.RadioItems(
+            options=[
+                {"label": "No Labels", "value": 1},
+                {"label": "First", "value": 2},
+                {"label": "Last", "value": 3},
+            ],
+            value=1,
+            id="label_radio",
+            className="px-3",
+            inline=True,
+        ),
+    ]
+)
+
 load_switches = dbc.Checklist(
-options=[{"label": "Check for NaN", "value": 1},
-{"label": "Generate Header", "value": 2},
-{"label": "Has Time stamp field", "value": 3},
+options=[{"label": "Generate Header", "value": 2},
 {"label": "Shuffel Data", "value": 4},
 ],
 value=[1],
@@ -170,7 +204,7 @@ id="load-switches",
 switch=True,)
 
 split_form = html.Div(dbc.FormGroup(
-    [dbc.Label("Training %:", html_for="split_data", width=label_width-1,className="pl-4"),
+    [dbc.Label("Split % for Trainig:", html_for="split_data", width=label_width-1,className="pl-4"),
     dbc.Col(dcc.Slider(id='split_data',min=0,max=100,
     step=1,
     marks={
@@ -194,8 +228,11 @@ upload_box,
 load_link_form,
 html.Hr(),
 load_switches,
+html.Hr(),
+label_radio,
+nan_radio,
 split_form,
-dbc.Button("Load File", id="load",  color="success",block=True, className="mx-2 mt-4")
+dbc.Button("Load File", id="load",  color="success",block=True, className="mx-2 mt-1")
 ],body=True,
 className="mt-3")
 
@@ -226,8 +263,7 @@ data_page_container = html.Div(
         ), dbc.CardBody(
         html.Div(id="data-tab-content", children="Test")
         )
-        ])
-
+        ]),      
     ]
 )
 
@@ -238,7 +274,7 @@ def data_tabs_callbacks(app):
     Output('n_clusters', 'value')],
     [Input('select-generator', 'value')]
     )
-    def update_output(value):
+    def update_generate_interface(value):
         if(value=="simple"):
             return (True, 1)
         else:
@@ -281,9 +317,11 @@ def data_tabs_callbacks(app):
     State('upload-data', 'filename'),
     State('load_link', 'value'),
     State('load-switches', 'value'),
+    State('label_radio', 'value'),
+    State('nan_radio', 'value'),
     State('split_data', 'value')]
     )
-    def load_data(n,contents, file_name, file_link,switch_values, training_data_ratio):
+    def load_data(n,contents, file_name, file_link,switch_values,label_radio, nan_radio, training_data_ratio):
         if n is None:
             raise PreventUpdate
 
@@ -342,36 +380,66 @@ def data_tabs_callbacks(app):
     )
     def render_tab_content(active_tab):
         if active_tab is not None:
+
+            def one_third_two_thirds(one, two):
+                content = dbc.Container([
+                dbc.Row([
+                    dbc.Col(one, width=4),
+                    dbc.Col(two, width=8),
+                ]),
+                dbc.Row([
+                    dbc.Col(dbc.Button(href="/page-2",disabled=True, id='btn_to_training', className="mx-auto p-2 btn-success", block=True,),
+                     width=6, className="mx-auto my-3"),
+                ])
+                ])
+                return content
+            
+            
             if active_tab == "generate":
-                return dbc.Row([
-                dbc.Col(generate_card, width=4),
-                dbc.Col(data_graphs_div, width=8),
-                ])
-            elif active_tab == "load":
-                return dbc.Row([
-                dbc.Col(load_card, width=4),
-                dbc.Col(data_graphs_div, width=8),
-                ])
+                return one_third_two_thirds(generate_card,data_graphs_div)
+
+            elif active_tab == "load":               
+                return one_third_two_thirds(load_card,data_graphs_div)
+
 
         return "No tab selected"
 
     @app.callback(
         [Output("upload_box_text", "children"),
-        Output("load", "disabled")],
+        Output("load", "disabled"), 
+        Output("load", "children"),],
         [Input("upload-data", "filename"),
         Input("load_link", "value")]
     ) 
     def display_file_name(filename, link_value):
         load_text_content = ['Drag and Drop or ',html.A('Select Files')]
         load_btn_disabled = True
+        btn_text = "Select Data to Load"
 
         if filename is not None:
+            btn_text = "Press to Load: " + str(filename)
             load_text_content = html.P(filename, className="p-auto")
             load_btn_disabled = False
 
         # Just a basic check that the of the box is not empty and has at least a .
-        if (link_value is not None) and (len(link_value.split('.')) > 1):
+        elif (link_value is not None) and (len(link_value.split('.')) > 1):
+            btn_text = "Press to Load from Link"
             load_btn_disabled = False
 
-        return load_text_content, load_btn_disabled
+        return load_text_content, load_btn_disabled, btn_text 
  
+
+    @app.callback(
+        [Output("btn_to_training", "children"),
+        Output("btn_to_training", "disabled")],
+        [Input("generated_data_store", "data"),
+        Input("loaded_data_store", "data")]
+    ) 
+    def activate_to_train_btn(data1, data2):
+        if (data1 is not None) or (data2 is not None):
+            return "2- Model Training" , False
+        
+        return "Please load data to train on!", True
+
+
+        
