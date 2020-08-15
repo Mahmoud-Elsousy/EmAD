@@ -1,5 +1,8 @@
 import plotly.express as px
 import pandas as pd
+from io import StringIO
+import dash_html_components as html
+import dash_bootstrap_components as dbc
 # import numpy as np
 # random_state = np.random.RandomState(3)
 
@@ -9,11 +12,21 @@ class DataStorage:
     xte = pd.DataFrame()
     ytr = None
     yte = None
+    source_name=''
     model = {}
 
-def update_scatter_matrix():
-    fig = px.scatter_matrix(DataStorage.xtr,title="Scatter matrix of the Data", template="ggplot2", opacity=0.7)
-    fig.update_traces(diagonal_visible=False)
+def update_scatter_matrix(title='Train Data'):
+    if DataStorage.ytr is None: 
+        # The case when there are no labels      
+        fig = px.scatter_matrix(DataStorage.xtr, template="plotly_white", opacity=0.7, title=title)
+        fig.update_traces(diagonal_visible=False)
+    else:
+
+        label=DataStorage.ytr.Y.replace({1: 'Anomaly', 0: 'Normal'})
+        fig = px.scatter_matrix(DataStorage.xtr,dimensions= DataStorage.xtr.columns,color=label,
+        title=title, template="plotly_white", opacity=0.7)
+        fig.update_traces(diagonal_visible=False)
+
     return fig
 
 def update_line_plots():
@@ -26,10 +39,12 @@ def update_line_plots():
     # fig.layout.plot_bgcolor = #fff
     
     for i in range(num_of_features):
-        fig.add_trace(go.Scatter(x=list(range(0, num_of_samples)), y=DataStorage.xtr[titles[i]]),row=i+1, col=1)
+        # label=DataStorage.ytr.Y.replace({1: 'Anomaly', 0: 'Normal'})
+        fig.add_trace(go.Scatter(x=list(range(0, num_of_samples)), y=DataStorage.xtr[titles[i]], 
+        name=titles[i]),row=i+1, col=1)
 
-    fig.update_layout(height=600, width=800, title_text="Feature line graphs",template="ggplot2")
-    fig.layout.paper_bgcolor = 'rgba(220,220,220,0.3)'
+    fig.update_layout(height=600, width=800, title_text="Feature line graphs",template="plotly_white")
+    # fig.layout.paper_bgcolor = 'rgba(220,220,220,0.3)'
     return fig
 
 
@@ -48,9 +63,11 @@ def process_loaded_data(df,generate_headers=False,shuffle=False, labels=None, na
     y= None
     if labels=='first':
         y=df[df.columns[0]]
+        y.columns=['Y']
         df.drop(df.columns[0],axis=1,inplace=True)
     elif labels=='last':
         y=df[df.columns[features-1]]
+        y.columns=['Y']
         df.drop(df.columns[features-1],axis=1,inplace=True)
 
     # Process missing values
@@ -91,19 +108,19 @@ def generate_data_simple(n_train, n_test, n_features, contamination,offset):
 
     xtr, xte, ytr, yte = generate_data(n_train=n_train, n_test=n_test, n_features=n_features, contamination=contamination,
                       train_only=False, offset=offset, behaviour='new',random_state=None)
-
+    
     DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = numpy_to_df(xtr, xte, ytr, yte)
-
+    DataStorage.source_name = 'Generated Data - Simple'
     return {'loaded':True}
 
 def generate_data_clusters(n_train, n_test, n_clusters, n_features, contamination,offset):
     from pyod.utils.data import generate_data_clusters
 
     xtr, xte, ytr, yte = generate_data_clusters(n_train=n_train, n_test=n_test, n_features=n_features, contamination=contamination,
-                      size='same',density='same', dist=(offset/40), random_state=None,return_in_clusters=False)
+                      n_clusters=n_clusters,size='same',density='same', dist=(offset/40), random_state=None,return_in_clusters=False)
 
     DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = numpy_to_df(xtr, xte, ytr, yte)
-
+    DataStorage.source_name = 'Generated Data - Clusters'
     return {'loaded':True}
 
 
@@ -130,17 +147,25 @@ def load_file_to_df(contents, filename,header,shuffle, label, nan, ratio):
 
     except Exception as e:
         print(e)
-
+        DataStorage.source_name=''
+        return {'loaded':False}
+    
+    DataStorage.source_name=filename
     return {'loaded':True}
 
 
 def load_link_to_df(link,header,shuffle, label, nan, ratio):
     import pandas as pd
-    df = pd.read_csv(link)
-    DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = process_loaded_data(df
-    ,header,shuffle, label, nan, ratio)
+    try:
+        df = pd.read_csv(link)
+        DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = process_loaded_data(df
+        ,header,shuffle, label, nan, ratio)
+    except Exception as e:
+        print(e)
+        DataStorage.source_name=''
+        return {'loaded':False}       
 
-
+    DataStorage.source_name=link.split('/')[-1]
     return {'loaded':True}
 
 
@@ -174,3 +199,33 @@ def train_model_lof(n_neighbors, contamination):
     else:
         print("No data to train on")
         return {'trained':False}
+
+def get_data_info():
+    tr_info = StringIO()
+    te_info = StringIO()
+    DataStorage.xtr.info(buf=tr_info)
+    DataStorage.xte.info(buf=te_info)
+
+    training = []
+    for i in tr_info.getvalue().split('\n')[1:]:
+        training.append(html.Br())
+        training.append(i)
+
+    testing = []
+    for i in te_info.getvalue().split('\n')[1:]:
+        testing.append(html.Br())
+        testing.append(i)
+
+    info = dbc.Container([html.H3(DataStorage.source_name),html.Br(),
+    dbc.Row([
+        dbc.Col([
+            html.H4('Training Data:'),
+            html.Code(training),
+        ]),
+        dbc.Col([
+            html.H4('Testing Data:'),
+            html.Code(testing),
+        ])
+    ]),
+    ], className='text-muted')
+    return info

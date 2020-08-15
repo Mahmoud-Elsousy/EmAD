@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+from io import StringIO
 from components.emad_functions import *
 # import plotly.express as px
 
@@ -98,9 +99,11 @@ className="mt-3")
 ''' B- Generate the Graphs Card'''
 data_graphs_div=html.Div([dbc.Tabs(
         [
+            
             dbc.Tab(label="Table", tab_id="table"),
             dbc.Tab(label="Scatter", tab_id="scatter"),
             dbc.Tab(label="Line Plots", tab_id="line"),
+            dbc.Tab(label="Info", tab_id="info"),
         ],
         id="data-graph-tabs",
         active_tab="table",
@@ -354,12 +357,19 @@ def data_tabs_callbacks(app):
             elif generated['loaded'] is True:
                 df = DataStorage.xtr
             else:
-                return "No Data to represent!"
+                return ''#html.Center(html.H3("No Data to represent!"), className='text-muted')
 
+            # Return the contents based on the selected tab
             if active_tab == "scatter":
                 return dcc.Graph(figure=update_scatter_matrix())
+            
             elif active_tab == "line":
                 return dcc.Graph(figure=update_line_plots())
+            
+            elif active_tab == "info":
+                info = get_data_info()
+                return info
+            
             elif active_tab == "table":
                 return dt.DataTable(
                 id='table',
