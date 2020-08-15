@@ -234,9 +234,9 @@ def model_tabs_callbacks(app):
 #
 #         if (active_tab is not None):
 #             if loaded['loaded'] is True:
-#                 df = DataStorage.loaded_data['xtr']
+#                 df = DataStorage.xtr
 #             elif generated['loaded'] is True:
-#                 df = DataStorage.loaded_data['xtr']
+#                 df = DataStorage.xtr
 #             else:
 #                 return "No Data to represent!"
 #

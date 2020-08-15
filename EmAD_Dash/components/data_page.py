@@ -164,12 +164,12 @@ nan_radio = dbc.FormGroup(
         dbc.Label("Missing values:"),
         dbc.RadioItems(
             options=[
-                {"label": "Ignore", "value": 1},
-                {"label": "Fill average", "value": 2},
-                {"label": "Fill 0", "value": 3},
-                {"label": "Delete Sample", "value": 4},
+                {"label": "Copy last valid", "value": 'ffill'},
+                {"label": "Fill average", "value": 'average'},
+                {"label": "Fill 0", "value": 'zero'},
+                {"label": "Delete Sample", "value": 'delete'},
             ],
-            value=1,
+            value='ffill',
             id="nan_radio",
             className="px-3",
             # inline=True,
@@ -183,11 +183,11 @@ label_radio = dbc.FormGroup(
         dbc.Label("Label Column:"),
         dbc.RadioItems(
             options=[
-                {"label": "No Labels", "value": 1},
-                {"label": "First", "value": 2},
-                {"label": "Last", "value": 3},
+                {"label": "No Labels", "value": 'none'},
+                {"label": "First", "value": 'first'},
+                {"label": "Last", "value": 'last'},
             ],
-            value=1,
+            value='none',
             id="label_radio",
             className="px-3",
             inline=True,
@@ -196,8 +196,8 @@ label_radio = dbc.FormGroup(
 )
 
 load_switches = dbc.Checklist(
-options=[{"label": "Generate Header", "value": 2},
-{"label": "Shuffel Data", "value": 4},
+options=[{"label": "Generate Header", "value": 1},
+{"label": "Shuffel Data", "value": 2},
 ],
 value=[1],
 id="load-switches",
@@ -321,17 +321,16 @@ def data_tabs_callbacks(app):
     State('nan_radio', 'value'),
     State('split_data', 'value')]
     )
-    def load_data(n,contents, file_name, file_link,switch_values,label_radio, nan_radio, training_data_ratio):
+    def load_data(n,contents, file_name, file_link,switch,label_radio, nan_radio, training_data_ratio):
         if n is None:
             raise PreventUpdate
 
         elif file_name is not None:
-            # TODO: load data from link
-            data = load_file_to_df(contents, file_name, training_data_ratio)
+            data = load_file_to_df(contents, file_name,1 in switch,2 in switch, label_radio, nan_radio, training_data_ratio)
             return data, True
 
         elif (file_link is not None) and (len(file_link.split('.')) > 1):
-            data = load_link_to_df(file_link, training_data_ratio)
+            data = load_link_to_df(file_link,1 in switch,2 in switch, label_radio, nan_radio, training_data_ratio)
             return data, True
 
     '''Data Load card callbacks'''
@@ -351,9 +350,9 @@ def data_tabs_callbacks(app):
 
         if (active_tab is not None):
             if loaded['loaded'] is True:
-                df = DataStorage.loaded_data['xtr']
+                df = DataStorage.xtr
             elif generated['loaded'] is True:
-                df = DataStorage.loaded_data['xtr']
+                df = DataStorage.xtr
             else:
                 return "No Data to represent!"
 
