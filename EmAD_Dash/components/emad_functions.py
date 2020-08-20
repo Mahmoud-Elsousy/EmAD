@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 from pyod.models.base import BaseDetector
 import numpy as np
 random_state = np.random.RandomState(3)
+import timeit
 
 class DataStorage:
     loaded_data = {}
@@ -264,4 +265,14 @@ def generate_model_table():
     return dbc.Table(table_header + table_body, striped=True, bordered=True, hover=True,responsive=True)
 
 def train_models():
-    print('Training models')
+    import pickle
+    import sys
+
+    for mod in DataStorage.model_list:
+        t=timeit.default_timer() 
+        mod.clf.fit(DataStorage.xtr)
+        t = timeit.default_timer() -t
+        p = pickle.dumps(mod.clf)
+        mod.size = sys.getsizeof(p)
+        mod.isTrained = 'Yes'
+        mod.training_time = t

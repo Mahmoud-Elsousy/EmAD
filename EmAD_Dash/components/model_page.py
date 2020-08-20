@@ -15,10 +15,8 @@ select_model = html.Div([
     dcc.Dropdown(
         id='select-model',
         options=[
-            {'label': 'PCA', 'value': 'pca'},
-            {'label': 'Isolation Forest', 'value': 'iforest'},
-            {'label': 'K Nearest Neighbors', 'value': 'knn'},
-            {'label': 'Local Outlier Factor (LOF)', 'value': 'lof'}
+            {'label': 'Principal component analysis (PCA) ', 'value': 'pca'},
+            {'label': 'Minimum Covariance Determinant (MCD)', 'value': 'mcd'},
         ],
         value=''
     ),
@@ -128,8 +126,7 @@ model_contamination_form = dbc.FormGroup(
 
 # 1- PCA
 def generate_pca_panel():
-# pyod.models.pca.PCA(contamination=0.1, svd_solver='auto', weighted=True, standardization=True, random_state=None)
-    
+# pyod.models.pca.PCA(contamination=0.1, svd_solver='auto', weighted=True, standardization=True, random_state=None)    
     pca_radio = dbc.FormGroup([
         dbc.Label("SVD Solver:"),
         dbc.RadioItems(
@@ -158,10 +155,15 @@ def generate_pca_panel():
     return pca_panels
 
 
+# 1- MCD
+def generate_mcd_panel():
+# pyod.models.mcd.MCD(contamination=0.1, store_precision=True, assume_centered=False, support_fraction=None, random_state=None)
+
+    add_mcd_btn = dbc.Button("Add Model", id="add_mcd_btn",  color="success",block=True, className="m-2")
+    mcd_panels = dbc.Form([model_contamination_form,add_mcd_btn])
+    return mcd_panels
+
 ''' Defining Models Interfaces'''
-
-
-
 
 
 def model_tabs_callbacks(app):
@@ -174,6 +176,10 @@ def model_tabs_callbacks(app):
         if(value=="pca"):
             pca_panel = generate_pca_panel()
             return pca_panel
+
+        if(value=="mcd"):
+            mcd_panel = generate_mcd_panel()
+            return mcd_panel
 
         else:
             return html.H4('Select Model to Add', className='mx-auto')
@@ -212,20 +218,21 @@ def model_tabs_callbacks(app):
         Output("added_models_table", "children"),
         # [Input({'type': 'table_signal', 'index': ALL}, 'data')]
         [Input('pca_add_signal', 'data'),
+        Input('mcd_add_signal', 'data'),
         Input('train_signal', 'data')]
     ) 
-    def update_added_models_table(data1,data2):
+    def update_added_models_table(*args):
         if (len(DataStorage.model_list)>0):
             added_models = html.Div([
                 dbc.Row(generate_model_table()),
-                dbc.Row(dcc.Loading(id="loading-1",type="default",children=html.Div(id='loading'))),
+                dbc.Row(dbc.Col(dbc.Spinner(html.Div(id='loading')), width=12)),
                 dbc.Row(train_btn),
             ])
             return added_models
         
         return html.H4('No Models Added')
 
-
+    # 1- PCA Callback
     @app.callback(
         Output('pca_add_signal', 'data'),
         [Input("add_pca_btn", "n_clicks")],
@@ -241,6 +248,23 @@ def model_tabs_callbacks(app):
             clf = PCA(contamination=contamination, svd_solver=solver, weighted=(1 in switches),
              standardization=(2 in switches), random_state=random_state)
             name = 'PCA ({},{},{},{})'.format(contamination,solver,(1 in switches),(2 in switches))
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 2- MCD Callback
+    @app.callback(
+        Output('mcd_add_signal', 'data'),
+        [Input("add_mcd_btn", "n_clicks")],
+        [State("model_contamination", "value"),]
+    ) 
+    def add_mcd_clbk(n,contamination):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.mcd import MCD
+            clf = MCD(contamination=contamination, random_state=random_state)
+            name = 'MCD ({})'.format(contamination)
             DataStorage.model_list.append(emadModel(name,clf))
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}
