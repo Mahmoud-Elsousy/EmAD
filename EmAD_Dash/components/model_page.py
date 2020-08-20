@@ -15,8 +15,9 @@ select_model = html.Div([
     dcc.Dropdown(
         id='select-model',
         options=[
-            {'label': 'Principal component analysis (PCA) ', 'value': 'pca'},
-            {'label': 'Minimum Covariance Determinant (MCD)', 'value': 'mcd'},
+            {'label': 'Principal component analysis(PCA) ', 'value': 'pca'},
+            {'label': 'Minimum Covariance Determinant(MCD)', 'value': 'mcd'},
+            {'label': 'one-class SVM (OCSVM)', 'value': 'ocsvm'},
         ],
         value=''
     ),
@@ -48,16 +49,15 @@ model_contamination_form = dbc.FormGroup(
 
 train_btn = dbc.Button("Train", id="train_btn",  color="success",block=True, className="m-2")
 
-alert_model_trained = dbc.Alert(
-            html.H5("Model Has been Trained!"),
-            id="alert_model_trained",
-            is_open=False,
-            duration=5000,
-        )
+# alert_model_trained = dbc.Alert(
+#             html.H5("Model Has been Trained!"),
+#             id="alert_model_trained",
+#             is_open=False,
+#             duration=5000,
+#         )
 
 model_form = html.Div(id='model_form',)
 train_card=dbc.Card([
-alert_model_trained,
 html.H5("Model Training", className="text-primary mx-auto"),
 html.Hr(),
 select_model,
@@ -155,13 +155,52 @@ def generate_pca_panel():
     return pca_panels
 
 
-# 1- MCD
+# 2- MCD
 def generate_mcd_panel():
 # pyod.models.mcd.MCD(contamination=0.1, store_precision=True, assume_centered=False, support_fraction=None, random_state=None)
 
     add_mcd_btn = dbc.Button("Add Model", id="add_mcd_btn",  color="success",block=True, className="m-2")
     mcd_panels = dbc.Form([model_contamination_form,add_mcd_btn])
     return mcd_panels
+
+
+# 3- OCSVM
+def generate_ocsvm_panel():
+# pyod.models.ocsvm.OCSVM(kernel='rbf', degree=3, shrinking=True, contamination=0.1)
+    ocsvm_radio = dbc.FormGroup([
+        dbc.Label("Kernel:"),
+        dbc.RadioItems(
+            id="ocsvm_radio",
+            options=[
+                {"label": "RBF", "value": 'rbf'},
+                {"label": "Ploynomial", "value": 'poly'},
+                {"label": "Linear", "value": 'linear'},
+                {"label": "Sigmoid", "value": 'sigmoid'},
+            ],
+            value='rbf',
+            className="px-3",
+            inline=True,
+        ),])
+
+    ocsvm_degree_input = dbc.FormGroup(
+    [dbc.Label("Polynomial Degree:", html_for="ocsvm_degree_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="ocsvm_degree_input", value=2, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    ocsvm_switch = dbc.Checklist(
+        id="ocsvm_switch",
+        options=[{"label": "Shrinking", "value": 1}],
+        value=[1],
+        switch=True,)
+
+    add_ocsvm_btn = dbc.Button("Add Model", id="add_ocsvm_btn",  color="success",block=True, className="m-2")
+    
+    ocsvm_panels = dbc.Form([ocsvm_radio,ocsvm_degree_input,ocsvm_switch,model_contamination_form,add_ocsvm_btn])
+
+    return ocsvm_panels
+
+
+
 
 ''' Defining Models Interfaces'''
 
@@ -180,6 +219,10 @@ def model_tabs_callbacks(app):
         if(value=="mcd"):
             mcd_panel = generate_mcd_panel()
             return mcd_panel
+
+        if(value=="ocsvm"):
+            ocsvm_panel = generate_ocsvm_panel()
+            return ocsvm_panel
 
         else:
             return html.H4('Select Model to Add', className='mx-auto')
@@ -213,12 +256,13 @@ def model_tabs_callbacks(app):
 
         return "No tab selected"
 
-
+    # 0- Update Table Display
     @app.callback(
         Output("added_models_table", "children"),
         # [Input({'type': 'table_signal', 'index': ALL}, 'data')]
         [Input('pca_add_signal', 'data'),
         Input('mcd_add_signal', 'data'),
+        Input('ocsvm_add_signal', 'data'),
         Input('train_signal', 'data')]
     ) 
     def update_added_models_table(*args):
@@ -268,6 +312,27 @@ def model_tabs_callbacks(app):
             DataStorage.model_list.append(emadModel(name,clf))
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}
+
+    # 3- OCSVM Callback
+    @app.callback( #ocsvm_radio,ocsvm_degree_input,ocsvm_switch,model_contamination_form,add_ocsvm_btn
+        Output('ocsvm_add_signal', 'data'),
+        [Input("add_ocsvm_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("ocsvm_radio", "value"),
+        State("ocsvm_degree_input", "value"),
+        State("ocsvm_switch", "value"),]
+    ) 
+    def add_mcd_clbk(n,contamination,radio,degree,switch):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.ocsvm import OCSVM
+            clf = OCSVM(contamination=contamination, kernel=radio,degree=degree,shrinking=(1 in switch))
+            name = 'OCSVM ({},{},{},{})'.format(contamination,radio,degree, 1 in switch)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
 
 
     @app.callback(
