@@ -8,7 +8,7 @@ import dash_table as dt
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 from io import StringIO
 from components.emad_functions import *
@@ -98,8 +98,7 @@ className="mt-3")
 
 ''' B- Generate the Graphs Card'''
 data_graphs_div=html.Div([dbc.Tabs(
-        [
-            
+        [      
             dbc.Tab(label="Table", tab_id="table"),
             dbc.Tab(label="Scatter", tab_id="scatter"),
             dbc.Tab(label="Line Plots", tab_id="line"),
@@ -400,7 +399,7 @@ def data_tabs_callbacks(app):
                     dbc.Col(dbc.Button(href="/page-2",disabled=True, id='btn_to_training', className="mx-auto p-2 btn-success", block=True,),
                      width=6, className="mx-auto my-3"),
                 ])
-                ])
+                ], className='px-0 mx-0')
                 return content
             
             

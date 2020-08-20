@@ -46,7 +46,8 @@ sidebar = html.Div(
             [
                 dbc.NavLink("1. Data Preparation", href="/page-1", id="page-1-link"),
                 dbc.NavLink("2. Model Training", href="/page-2", id="page-2-link"),
-                dbc.NavLink("3. Deployment", href="/page-3", id="page-3-link"),
+                dbc.NavLink("3. Model Testing", href="/page-3", id="page-3-link"),
+                dbc.NavLink("4. Deployment", href="/page-4", id="page-4-link"),
             ],
             vertical=True,
             pills=True,
@@ -59,22 +60,24 @@ content = html.Div(id="page-content", style=CONTENT_STYLE)
 
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content,
 dcc.Store(id="generated_data_store"),
-dcc.Store(id="trained_model_store"),
+dcc.Store(id="added_model_store"),
 dcc.Store(id="loaded_model_store"),
+dcc.Store(id='pca_add_signal'),
+dcc.Store(id='train_signal'),
 dcc.Store(id="loaded_data_store")])
 
 
 # this callback uses the current pathname to set the active state of the
 # corresponding nav link to true, allowing users to tell see page they are on
 @app.callback(
-    [Output(f"page-{i}-link", "active") for i in range(1, 4)],
+    [Output(f"page-{i}-link", "active") for i in range(1, 5)],
     [Input("url", "pathname")],
 )
 def toggle_active_links(pathname):
     if pathname == "/":
         # Treat page 1 as the homepage / index
-        return True, False, False
-    return [pathname == f"/page-{i}" for i in range(1, 4)]
+        return True, False, False, False
+    return [pathname == f"/page-{i}" for i in range(1, 5)]
 
 
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
@@ -85,6 +88,8 @@ def render_page_content(pathname):
         return model_page_container
     elif pathname == "/page-3":
         return html.P("Oh cool, this is page 3!")
+    elif pathname == "/page-4":
+        return html.P("Oh cool, this is page 4!")
     # If the user tries to reach a different page, return a 404 message
     return dbc.Jumbotron(
         [

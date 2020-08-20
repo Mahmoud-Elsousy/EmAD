@@ -3,8 +3,9 @@ import pandas as pd
 from io import StringIO
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-# import numpy as np
-# random_state = np.random.RandomState(3)
+from pyod.models.base import BaseDetector
+import numpy as np
+random_state = np.random.RandomState(3)
 
 class DataStorage:
     loaded_data = {}
@@ -13,7 +14,18 @@ class DataStorage:
     ytr = None
     yte = None
     source_name=''
-    model = {}
+    model_list = []
+    model_df = pd.DataFrame(columns=['Name','Trained','Size','Train Time'])
+
+
+class emadModel:
+    def __init__(self, name, clf):
+        self.name = name
+        self.clf = clf
+        self.isTrained = 'No'
+        self.size=0
+        self.training_time = 0
+
 
 def update_scatter_matrix(title='Train Data'):
     if DataStorage.ytr is None: 
@@ -48,7 +60,7 @@ def update_line_plots():
     return fig
 
 
-def process_loaded_data(df,generate_headers=False,shuffle=False, labels=None, nan=None,ratio=70):
+def process_loaded_data(df,generate_headers=False,shuffle=False, labels=None, nan=None,ratio=70, random_state=random_state):
     from sklearn.model_selection import train_test_split
     features = df.shape[1]
 
@@ -107,7 +119,7 @@ def generate_data_simple(n_train, n_test, n_features, contamination,offset):
     from pyod.utils.data import generate_data
 
     xtr, xte, ytr, yte = generate_data(n_train=n_train, n_test=n_test, n_features=n_features, contamination=contamination,
-                      train_only=False, offset=offset, behaviour='new',random_state=None)
+                      train_only=False, offset=offset, behaviour='new',random_state=random_state)
     
     DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = numpy_to_df(xtr, xte, ytr, yte)
     DataStorage.source_name = 'Generated Data - Simple'
@@ -117,7 +129,7 @@ def generate_data_clusters(n_train, n_test, n_clusters, n_features, contaminatio
     from pyod.utils.data import generate_data_clusters
 
     xtr, xte, ytr, yte = generate_data_clusters(n_train=n_train, n_test=n_test, n_features=n_features, contamination=contamination,
-                      n_clusters=n_clusters,size='same',density='same', dist=(offset/40), random_state=None,return_in_clusters=False)
+                      n_clusters=n_clusters,size='same',density='same', dist=(offset/40), random_state=random_state,return_in_clusters=False)
 
     DataStorage.xtr, DataStorage.xte, DataStorage.ytr, DataStorage.yte = numpy_to_df(xtr, xte, ytr, yte)
     DataStorage.source_name = 'Generated Data - Clusters'
@@ -170,35 +182,35 @@ def load_link_to_df(link,header,shuffle, label, nan, ratio):
 
 
 '''Training models'''
-def train_model_iforest(model_feature, contamination):
-    if DataStorage.loaded_data is not None:
-        from pyod.models.iforest import IForest
-        DataStorage.model = IForest(contamination=contamination)
-        DataStorage.model.fit(DataStorage.xtr)
-        return {'trained':True}
-    else:
-        print("No data to train on")
-        return {'trained':False}
+# def train_model_iforest(model_feature, contamination):
+#     if DataStorage.loaded_data is not None:
+#         from pyod.models.iforest import IForest
+#         DataStorage.model = IForest(contamination=contamination)
+#         DataStorage.model.fit(DataStorage.xtr)
+#         return {'trained':True}
+#     else:
+#         print("No data to train on")
+#         return {'trained':False}
 
-def train_model_knn(model_feature, contamination):
-    if DataStorage.loaded_data is not None:
-        from pyod.models.knn import KNN
-        DataStorage.model = KNN(contamination=contamination)
-        DataStorage.model.fit(DataStorage.xtr)
-        return {'trained':True}
-    else:
-        print("No data to train on")
-        return {'trained':False}
+# def train_model_knn(model_feature, contamination):
+#     if DataStorage.loaded_data is not None:
+#         from pyod.models.knn import KNN
+#         DataStorage.model = KNN(contamination=contamination)
+#         DataStorage.model.fit(DataStorage.xtr)
+#         return {'trained':True}
+#     else:
+#         print("No data to train on")
+#         return {'trained':False}
 
-def train_model_lof(n_neighbors, contamination):
-    if DataStorage.loaded_data is not None:
-        from pyod.models.lof import LOF
-        DataStorage.model = LOF(n_neighbors=n_neighbors, contamination=contamination)
-        DataStorage.model.fit(DataStorage.xtr)
-        return {'trained':True}
-    else:
-        print("No data to train on")
-        return {'trained':False}
+# def train_model_lof(n_neighbors, contamination):
+#     if DataStorage.loaded_data is not None:
+#         from pyod.models.lof import LOF
+#         DataStorage.model = LOF(n_neighbors=n_neighbors, contamination=contamination)
+#         DataStorage.model.fit(DataStorage.xtr)
+#         return {'trained':True}
+#     else:
+#         print("No data to train on")
+#         return {'trained':False}
 
 def get_data_info():
     tr_info = StringIO()
@@ -229,3 +241,27 @@ def get_data_info():
     ]),
     ], className='text-muted')
     return info
+
+def generate_model_table():
+    table_header = [html.Thead(html.Tr([html.Th("#"),
+     html.Th("Model"),
+     html.Th("Trained?"),
+     html.Th("Size"),
+     html.Th("Training Time")]))
+    ]
+    rows = []
+    i=0
+    for mod in DataStorage.model_list:
+        i+=1
+        rows.append(html.Tr([html.Td(i),
+         html.Td(mod.name),
+         html.Td(mod.isTrained),
+         html.Td(mod.size),
+         html.Td(mod.training_time),
+         ]))
+
+    table_body = [html.Tbody(rows)]
+    return dbc.Table(table_header + table_body, striped=True, bordered=True, hover=True,responsive=True)
+
+def train_models():
+    print('Training models')
