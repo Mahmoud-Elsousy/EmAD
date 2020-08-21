@@ -18,6 +18,8 @@ select_model = html.Div([
             {'label': 'Principal component analysis(PCA) ', 'value': 'pca'},
             {'label': 'Minimum Covariance Determinant(MCD)', 'value': 'mcd'},
             {'label': 'one-class SVM (OCSVM)', 'value': 'ocsvm'},
+            {'label': 'LMDD', 'value': 'lmdd'},
+            {'label': 'Local Outlier Factor (LOF)', 'value': 'lof'},
         ],
         value=''
     ),
@@ -108,7 +110,7 @@ model_feature = dbc.FormGroup(
     row=True,)
 
 model_contamination_form = dbc.FormGroup(
-    [dbc.Label("Contamination:", html_for="model_contamination", width=label_width,),
+    [dbc.Label("Contamination:", html_for="model_contamination", width=label_width,className='ml-2 pl-2'),
     dbc.Col(dcc.Slider(id='model_contamination',min=0.001,max=0.2,
     step=0.01,
     marks={
@@ -199,7 +201,63 @@ def generate_ocsvm_panel():
 
     return ocsvm_panels
 
+# 4- LMDD
+def generate_lmdd_panel():
+# pyod.models.lmdd.LMDD(contamination=0.1, n_iter=50, dis_measure='aad', random_state=None)
+    lmdd_iteration_input = dbc.FormGroup(
+    [dbc.Label("Iterations:", html_for="lmdd_iteration_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="lmdd_iteration_input", value=30, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
 
+    lmdd_radio = dbc.FormGroup([
+        dbc.Label("Kernel:"),
+        dbc.RadioItems(
+            id="lmdd_radio",
+            options=[
+                {"label": "Average Absolute Deviation", "value": 'aad'},
+                {"label": "Variance", "value": 'var'},
+                {"label": "Interquartile Range", "value": 'iqr'},
+            ],
+            value='aad',
+            className="px-3",
+            # inline=True,
+        ),])    
+
+    add_lmdd_btn = dbc.Button("Add Model", id="add_lmdd_btn",  color="success",block=True, className="m-2")
+    lmdd_panels = dbc.Form([lmdd_iteration_input,lmdd_radio,model_contamination_form,add_lmdd_btn])
+    return lmdd_panels
+
+# 5- LOF
+def generate_lof_panel():
+# pyod.models.lof.LOF(n_neighbors=20, algorithm='auto', leaf_size=30, contamination=0.1)
+    lof_neighbers_input = dbc.FormGroup(
+    [dbc.Label("Neighbers:", html_for="lof_neighbers_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="lof_neighbers_input", value=20, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    lof_leaf_input = dbc.FormGroup(
+    [dbc.Label("Leaf Size:", html_for="lof_leaf_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="lof_leaf_input", value=30, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    lof_radio = dbc.FormGroup([
+        dbc.Label("Algorithm:"),
+        dbc.RadioItems(
+            id="lof_radio",
+            options=[
+                {"label": "Auto", "value": 'auto'},
+                {"label": "BallTree", "value": 'ball_tree'},
+                {"label": "KDTree", "value": 'kd_tree'},
+                {"label": "Brute-force", "value": 'brute'},
+            ],
+            value='auto',
+            className="px-3",
+            # inline=True,
+        ),])    
+
+    add_lof_btn = dbc.Button("Add Model", id="add_lof_btn",  color="success",block=True, className="m-2")
+    lof_panels = dbc.Form([lof_neighbers_input, lof_leaf_input,lof_radio,model_contamination_form,add_lof_btn])
+    return lof_panels
 
 
 ''' Defining Models Interfaces'''
@@ -223,6 +281,15 @@ def model_tabs_callbacks(app):
         if(value=="ocsvm"):
             ocsvm_panel = generate_ocsvm_panel()
             return ocsvm_panel
+
+        if(value=="lmdd"):
+            lmdd_panel = generate_lmdd_panel()
+            return lmdd_panel
+
+        if(value=="lof"):
+            lmdd_panel = generate_lof_panel()
+            return lmdd_panel
+
 
         else:
             return html.H4('Select Model to Add', className='mx-auto')
@@ -263,6 +330,8 @@ def model_tabs_callbacks(app):
         [Input('pca_add_signal', 'data'),
         Input('mcd_add_signal', 'data'),
         Input('ocsvm_add_signal', 'data'),
+        Input('lmdd_add_signal', 'data'),
+        Input('lof_add_signal', 'data'),
         Input('train_signal', 'data')]
     ) 
     def update_added_models_table(*args):
@@ -333,6 +402,46 @@ def model_tabs_callbacks(app):
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}
 
+
+    # 4- LMDD Callback
+    @app.callback( #lmdd_iteration_input,lmdd_radio,model_contamination_form,add_lmdd_btn
+        Output('lmdd_add_signal', 'data'),
+        [Input("add_lmdd_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("lmdd_radio", "value"),
+        State("lmdd_iteration_input", "value")]
+    ) 
+    def add_lmdd_clbk(n,contamination,radio,iteration):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.lmdd import LMDD
+            clf = LMDD(contamination=contamination, n_iter=iteration, dis_measure=radio, random_state=random_state)
+            name = 'LMDD ({},{},{},{})'.format(contamination,radio,iteration,radio)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+
+    # 5- LOF Callback
+    @app.callback( #lof_neighbers_input, lof_leaf_input,lof_radio,model_contamination_form,add_lof_btn
+        Output('lof_add_signal', 'data'),
+        [Input("add_lof_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("lof_neighbers_input", "value"),
+        State("lof_leaf_input", "value"),
+        State("lof_radio", "value")]
+    ) 
+    def add_lmdd_clbk(n,contamination,neighbers,leaf,algorithm):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.lof import LOF
+            clf = LOF(contamination=contamination, n_neighbors=neighbers, leaf_size=leaf, algorithm=algorithm)
+            name = 'LOF ({},{},{},{})'.format(contamination,neighbers,leaf,algorithm)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
 
 
     @app.callback(

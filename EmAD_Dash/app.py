@@ -65,6 +65,8 @@ dcc.Store(id="loaded_model_store"),
 dcc.Store(id='pca_add_signal'),
 dcc.Store(id='mcd_add_signal'),
 dcc.Store(id='ocsvm_add_signal'),
+dcc.Store(id='lmdd_add_signal'),
+dcc.Store(id='lof_add_signal'),
 dcc.Store(id='train_signal'),
 dcc.Store(id="loaded_data_store")])
 
