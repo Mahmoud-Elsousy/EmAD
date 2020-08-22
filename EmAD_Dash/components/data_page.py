@@ -226,7 +226,6 @@ alert_data_loaded,
 html.H5("Load Data from file", className="text-primary mx-auto"),
 html.Hr(),
 upload_box,
-# html.Hr(),
 load_link_form,
 html.Hr(),
 load_switches,
@@ -237,12 +236,6 @@ split_form,
 dbc.Button("Load File", id="load",  color="success",block=True, className="mx-2 mt-1")
 ],body=True,
 className="mt-3")
-
-''' C- Define the Load data card '''
-
-''' D- Define the Upload functions '''
-
-''' D- Define the Upload functions '''
 
 
 ''' Defining the Data generator interface '''
@@ -342,8 +335,6 @@ def data_tabs_callbacks(app):
         [Input("data-graph-tabs", "active_tab"),
         Input("loaded_data_store", "data"),
         Input("generated_data_store", "data")],
-        # [State("loaded_data_store","data"),
-        # State("generated_data_store","data"),]
     )
     def render_tab_graphs(active_tab, loaded,generated):
 
@@ -353,17 +344,19 @@ def data_tabs_callbacks(app):
         if (active_tab is not None):
             if loaded['loaded'] is True:
                 df = DataStorage.xtr
+                dfy = DataStorage.ytr
             elif generated['loaded'] is True:
                 df = DataStorage.xtr
+                dfy = DataStorage.ytr
             else:
                 return ''#html.Center(html.H3("No Data to represent!"), className='text-muted')
 
             # Return the contents based on the selected tab
             if active_tab == "scatter":
-                return dcc.Graph(figure=update_scatter_matrix())
+                return dcc.Graph(figure=update_scatter_matrix(df,dfy))
             
             elif active_tab == "line":
-                return dcc.Graph(figure=update_line_plots())
+                return dcc.Graph(figure=update_line_plots(df))
             
             elif active_tab == "info":
                 info = get_data_info()

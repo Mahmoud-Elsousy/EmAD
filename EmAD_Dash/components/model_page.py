@@ -5,8 +5,6 @@ from components.data_page import *
 label_width = 5
 input_width = 6
 
-dcc.Store(id={'type': 'table_signal','index': 'pca'})
-dcc.Store(id={'type': 'table_signal','index': 'train'})
 
 
 
@@ -80,7 +78,7 @@ className="my-3")
 
 model_page_container = html.Div(
     [
-        html.H1("2- Model Training and Testing"),
+        html.H1("2- Model Training"),
         dbc.Card([
         dbc.CardHeader(
                 dbc.Tabs(
@@ -312,7 +310,7 @@ def model_tabs_callbacks(app):
                 dbc.Row([
                     dbc.Col(dbc.Button("1- Data Preparation",href="/page-1", id='btn_to_data', className="mx-auto p-2 btn-secondary", block=True,),
                      width=4, className="ml-auto mt-4"),
-                    dbc.Col(dbc.Button("3- Model Testing",href="/page-3",disabled=True, id='btn_to_testing', className="mx-auto p-2 btn-success", block=True,),
+                    dbc.Col(dbc.Button("Train models before testing",href="/page-3",disabled=True, id='btn_to_testing', className="mx-auto p-2 btn-success", block=True,),
                      width=4, className="mr-auto mt-4"),
                 ])
                 ], className='px-0 mx-0')
@@ -447,7 +445,8 @@ def model_tabs_callbacks(app):
     @app.callback(
     [Output('loading', 'children'),
     Output('train_signal', 'data'),
-    Output('btn_to_testing', 'disabled')],
+    Output('btn_to_testing', 'disabled'),
+    Output('btn_to_testing', 'children')],
     [Input('train_btn', 'n_clicks')]
     )
     def train_added_models(n):
@@ -455,4 +454,4 @@ def model_tabs_callbacks(app):
             raise PreventUpdate
         else:
             train_models()
-            return '', {'added': True}, False
+            return '', {'added': True}, False, '3- Model Testing'

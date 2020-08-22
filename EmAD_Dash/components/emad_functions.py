@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from pyod.models.base import BaseDetector
 import numpy as np
 random_state = np.random.RandomState(3)
-import timeit
+from time import time
 
 class DataStorage:
     loaded_data = {}
@@ -26,37 +26,39 @@ class emadModel:
         self.isTrained = 'No'
         self.size=0
         self.training_time = 0
+        self.inference_time = 0
+        self.auc = 0
+        self.pan = 0
 
 
-def update_scatter_matrix(title='Train Data'):
-    if DataStorage.ytr is None: 
+def update_scatter_matrix(dfx,dfy):
+    if dfy is None: 
         # The case when there are no labels      
-        fig = px.scatter_matrix(DataStorage.xtr, template="plotly_white", opacity=0.7, title=title)
+        fig = px.scatter_matrix(dfx, template="plotly_white", opacity=0.7)
         fig.update_traces(diagonal_visible=False)
     else:
 
-        label=DataStorage.ytr.Y.replace({1: 'Anomaly', 0: 'Normal'})
-        fig = px.scatter_matrix(DataStorage.xtr,dimensions= DataStorage.xtr.columns,color=label,
-        title=title, template="plotly_white", opacity=0.7)
+        label=dfy.Y.replace({1: 'Anomaly', 0: 'Normal'})
+        fig = px.scatter_matrix(dfx,dimensions= dfx.columns,color=label,
+        template="plotly_white", opacity=0.7)
         fig.update_traces(diagonal_visible=False)
 
     return fig
 
-def update_line_plots():
+def update_line_plots(dfx=DataStorage.xtr):
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
-    num_of_features = DataStorage.xtr.shape[1]
-    num_of_samples = DataStorage.xtr.shape[0]
-    titles = DataStorage.xtr.columns
+    num_of_features = dfx.shape[1]
+    num_of_samples = dfx.shape[0]
+    titles = dfx.columns
     fig = make_subplots(rows=num_of_features, cols=1)
     # fig.layout.plot_bgcolor = #fff
     
     for i in range(num_of_features):
-        # label=DataStorage.ytr.Y.replace({1: 'Anomaly', 0: 'Normal'})
-        fig.add_trace(go.Scatter(x=list(range(0, num_of_samples)), y=DataStorage.xtr[titles[i]], 
+        fig.add_trace(go.Scatter(x=list(range(0, num_of_samples)), y=dfx[titles[i]], 
         name=titles[i]),row=i+1, col=1)
 
-    fig.update_layout(height=600, width=800, title_text="Feature line graphs",template="plotly_white")
+    fig.update_layout(height=600, width=800,template="plotly_white")
     # fig.layout.paper_bgcolor = 'rgba(220,220,220,0.3)'
     return fig
 
@@ -182,37 +184,6 @@ def load_link_to_df(link,header,shuffle, label, nan, ratio):
     return {'loaded':True}
 
 
-'''Training models'''
-# def train_model_iforest(model_feature, contamination):
-#     if DataStorage.loaded_data is not None:
-#         from pyod.models.iforest import IForest
-#         DataStorage.model = IForest(contamination=contamination)
-#         DataStorage.model.fit(DataStorage.xtr)
-#         return {'trained':True}
-#     else:
-#         print("No data to train on")
-#         return {'trained':False}
-
-# def train_model_knn(model_feature, contamination):
-#     if DataStorage.loaded_data is not None:
-#         from pyod.models.knn import KNN
-#         DataStorage.model = KNN(contamination=contamination)
-#         DataStorage.model.fit(DataStorage.xtr)
-#         return {'trained':True}
-#     else:
-#         print("No data to train on")
-#         return {'trained':False}
-
-# def train_model_lof(n_neighbors, contamination):
-#     if DataStorage.loaded_data is not None:
-#         from pyod.models.lof import LOF
-#         DataStorage.model = LOF(n_neighbors=n_neighbors, contamination=contamination)
-#         DataStorage.model.fit(DataStorage.xtr)
-#         return {'trained':True}
-#     else:
-#         print("No data to train on")
-#         return {'trained':False}
-
 def get_data_info():
     tr_info = StringIO()
     te_info = StringIO()
@@ -247,8 +218,8 @@ def generate_model_table():
     table_header = [html.Thead(html.Tr([html.Th("#"),
      html.Th("Model"),
      html.Th("Trained?"),
-     html.Th("Size"),
-     html.Th("Training Time")]))
+     html.Th("Size(KB)"),
+     html.Th("Training Time(s)")]))
     ]
     rows = []
     i=0
@@ -257,8 +228,8 @@ def generate_model_table():
         rows.append(html.Tr([html.Td(i),
          html.Td(mod.name),
          html.Td(mod.isTrained),
-         html.Td(mod.size),
-         html.Td(mod.training_time),
+         html.Td('%.2f'%(mod.size)),
+         html.Td('%.2f'%(mod.training_time)),
          ]))
 
     table_body = [html.Tbody(rows)]
@@ -269,10 +240,54 @@ def train_models():
     import sys
 
     for mod in DataStorage.model_list:
-        t=timeit.default_timer() 
+        t=time() 
         mod.clf.fit(DataStorage.xtr)
-        t = timeit.default_timer() -t
+        t = time() - t
         p = pickle.dumps(mod.clf)
-        mod.size = sys.getsizeof(p)
+        mod.size = sys.getsizeof(p)/1000
         mod.isTrained = 'Yes'
         mod.training_time = t
+
+
+def generate_test_table():
+    table_header = [html.Thead(html.Tr([html.Th("#"),
+     html.Th("Model"),
+     html.Th("Trained?"),
+     html.Th("Size(KB)"),
+     html.Th("Training Time(s)"),
+     html.Th("Inference Time(ms)"),
+     html.Th("AUC Score"),
+     html.Th("Precision @ n "),
+     ]))
+    ]
+    rows = []
+    i=0
+    for mod in DataStorage.model_list:
+        i+=1
+        rows.append(html.Tr([html.Td(i),
+         html.Td(mod.name),
+         html.Td(mod.isTrained),
+         html.Td('%.2f'%(mod.size)),
+         html.Td('%.2f'%(mod.training_time)),
+         html.Td('%.4f'%(mod.inference_time)),
+         html.Td('%.3f'%(mod.auc)),
+         html.Td('%.3f'%(mod.pan)),
+         ]))
+
+    table_body = [html.Tbody(rows)]
+    return dbc.Table(table_header + table_body, striped=True, bordered=True, hover=True,responsive=True)
+
+
+def test_models():
+    from pyod.utils.utility import precision_n_scores
+    from sklearn.metrics import roc_auc_score
+    xte = DataStorage.xte.to_numpy()
+    for mod in DataStorage.model_list:
+        t=time()
+        scores = mod.clf.decision_function(xte) 
+        mod.inference_time = ((time() - t)*1000)/np.shape(xte)[0]
+        mod.auc = roc_auc_score(DataStorage.yte, scores)
+        mod.pan = precision_n_scores(DataStorage.yte, scores)
+
+
+    

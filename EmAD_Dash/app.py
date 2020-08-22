@@ -11,11 +11,12 @@ import plotly.graph_objs as go
 app = dash.Dash(external_stylesheets=[dbc.themes.MINTY])
 
 # from components.data_page import *
-from components.model_page import *
+from components.test_page import *
 
 
 data_tabs_callbacks(app)
 model_tabs_callbacks(app)
+test_tabs_callbacks(app)
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -68,6 +69,7 @@ dcc.Store(id='ocsvm_add_signal'),
 dcc.Store(id='lmdd_add_signal'),
 dcc.Store(id='lof_add_signal'),
 dcc.Store(id='train_signal'),
+dcc.Store(id='test_signal'),
 dcc.Store(id="loaded_data_store")])
 
 
@@ -91,7 +93,7 @@ def render_page_content(pathname):
     elif pathname == "/page-2":
         return model_page_container
     elif pathname == "/page-3":
-        return html.P("Oh cool, this is page 3!")
+        return test_page_container
     elif pathname == "/page-4":
         return html.P("Oh cool, this is page 4!")
     # If the user tries to reach a different page, return a 404 message
