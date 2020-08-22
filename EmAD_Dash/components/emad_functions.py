@@ -300,12 +300,12 @@ def deploy_model_info_table():
 
     model_name = html.H4(dm.name, className='text-secondary text-center mb-3')
 
-    row1 = html.Tr([html.Td("Features"), html.Td(dm.n_features)])
-    row2 = html.Tr([html.Td("Size"), html.Td('%.3f'%(dm.size))])
-    row3 = html.Tr([html.Td("Training Time"), html.Td('%.3f'%(dm.training_time))])
-    row4 = html.Tr([html.Td("Inference Time"), html.Td(('%.4f'%dm.inference_time))])
-    row5 = html.Tr([html.Td("AUC Score"), html.Td('%.3f'%(dm.auc))])
-    row6 = html.Tr([html.Td("P@n Score"), html.Td('%.3f'%(dm.pan))])
+    row1 = html.Tr([html.Td("Features #"), html.Td(dm.n_features)])
+    row2 = html.Tr([html.Td("Size (Before Serialization)"), html.Td('%.3f'%(dm.size))])
+    row3 = html.Tr([html.Td("Training Time(s)"), html.Td('%.3f'%(dm.training_time))])
+    row4 = html.Tr([html.Td("Inference Time(ms)"), html.Td(('%.4f'%dm.inference_time))])
+    row5 = html.Tr([html.Td("AUC Score"), html.Td('%%%.1f'%(dm.auc*100))])
+    row6 = html.Tr([html.Td("P@n Score"), html.Td('%%%.1f'%(dm.pan*100))])
 
     table_body = [html.Tbody([row1, row2, row3, row4, row5, row6])]
     table = dbc.Table(table_body, bordered=False,)
