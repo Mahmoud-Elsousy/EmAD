@@ -119,8 +119,6 @@ def test_tabs_callbacks(app):
                 )
 
         return "No tab selected"
-
-
    
 
     @app.callback(
@@ -138,7 +136,7 @@ def test_tabs_callbacks(app):
             tested_models = []
             for i in range(len(DataStorage.model_list)):
                 tested_models.append({'label': DataStorage.model_list[i].name, 'value': i})
-            deploy_dropdown = dcc.Dropdown(id='deploy-model',options=tested_models,value=0),
+            deploy_dropdown = dcc.Dropdown(id='deploy_model',options=tested_models,value=0),
             return deploy_dropdown, {'added': True}, False, '4- Deploy Selected Model'
 
     @app.callback(
@@ -147,3 +145,12 @@ def test_tabs_callbacks(app):
     )
     def render_test_table(data):
         return generate_test_table()
+
+    @app.callback(
+        Output('deploy_signal', 'data'),
+        [Input("deploy_model", "value")]
+    )
+    def save_deploy_model(val):
+        DataStorage.deploy_model = DataStorage.model_list[val]
+        DataStorage.deploy_model.n_features = DataStorage.xtr.shape[1]
+        return {'selected':True}

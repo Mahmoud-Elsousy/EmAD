@@ -389,7 +389,7 @@ def model_tabs_callbacks(app):
         State("ocsvm_degree_input", "value"),
         State("ocsvm_switch", "value"),]
     ) 
-    def add_mcd_clbk(n,contamination,radio,degree,switch):
+    def add_ocsvm_clbk(n,contamination,radio,degree,switch):
         if (n is None):
             raise PreventUpdate
         else:
@@ -430,7 +430,7 @@ def model_tabs_callbacks(app):
         State("lof_leaf_input", "value"),
         State("lof_radio", "value")]
     ) 
-    def add_lmdd_clbk(n,contamination,neighbers,leaf,algorithm):
+    def add_lof_clbk(n,contamination,neighbers,leaf,algorithm):
         if (n is None):
             raise PreventUpdate
         else:

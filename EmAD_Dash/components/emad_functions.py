@@ -8,27 +8,32 @@ import numpy as np
 random_state = np.random.RandomState(3)
 from time import time
 
-class DataStorage:
-    loaded_data = {}
-    xtr = pd.DataFrame()
-    xte = pd.DataFrame()
-    ytr = None
-    yte = None
-    source_name=''
-    model_list = []
-    model_df = pd.DataFrame(columns=['Name','Trained','Size','Train Time'])
-
 
 class emadModel:
     def __init__(self, name, clf):
         self.name = name
         self.clf = clf
         self.isTrained = 'No'
+        self.n_features = 0
         self.size=0
         self.training_time = 0
         self.inference_time = 0
         self.auc = 0
         self.pan = 0
+
+class DataStorage:
+    loaded_data = {}
+    xtr = pd.DataFrame()
+    xte = pd.DataFrame()
+    ytr = None
+    yte = None
+    source_name='' # Data Source Name
+    model_list = []
+    deploy_model = emadModel('temp', None)
+    
+
+
+        
 
 
 def update_scatter_matrix(dfx,dfy):
@@ -203,12 +208,12 @@ def get_data_info():
     info = dbc.Container([html.H3(DataStorage.source_name),html.Br(),
     dbc.Row([
         dbc.Col([
-            html.H4('Training Data:'),
-            html.Code(training),
+            html.H4('Training Data:',className = 'text-secondary'),
+            html.Code(training,className = 'text-primary'),
         ]),
         dbc.Col([
-            html.H4('Testing Data:'),
-            html.Code(testing),
+            html.H4('Testing Data:',className = 'text-secondary'),
+            html.Code(testing,className = 'text-primary'),
         ])
     ]),
     ], className='text-muted')
@@ -275,7 +280,7 @@ def generate_test_table():
          ]))
 
     table_body = [html.Tbody(rows)]
-    return dbc.Table(table_header + table_body, striped=True, bordered=True, hover=True,responsive=True)
+    return dbc.Table(table_header + table_body, bordered=True, hover=True,responsive=True)
 
 
 def test_models():
@@ -290,4 +295,20 @@ def test_models():
         mod.pan = precision_n_scores(DataStorage.yte, scores)
 
 
-    
+def deploy_model_info_table():
+    dm = DataStorage.deploy_model
+
+    model_name = html.H4(dm.name, className='text-secondary text-center mb-3')
+
+    row1 = html.Tr([html.Td("Features"), html.Td(dm.n_features)])
+    row2 = html.Tr([html.Td("Size"), html.Td('%.3f'%(dm.size))])
+    row3 = html.Tr([html.Td("Training Time"), html.Td('%.3f'%(dm.training_time))])
+    row4 = html.Tr([html.Td("Inference Time"), html.Td(('%.4f'%dm.inference_time))])
+    row5 = html.Tr([html.Td("AUC Score"), html.Td('%.3f'%(dm.auc))])
+    row6 = html.Tr([html.Td("P@n Score"), html.Td('%.3f'%(dm.pan))])
+
+    table_body = [html.Tbody([row1, row2, row3, row4, row5, row6])]
+    table = dbc.Table(table_body, bordered=False,)
+    cont = dbc.Container([model_name,table])
+
+    return cont
