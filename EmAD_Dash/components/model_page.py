@@ -1,13 +1,8 @@
 
 from components.data_page import *
 
-
 label_width = 5
 input_width = 6
-
-
-
-
 
 select_model = html.Div([
     dcc.Dropdown(
@@ -32,37 +27,8 @@ select_model = html.Div([
 ])
 
 
-
-# Note to delete below:
-model_feature = dbc.FormGroup(
-    [dbc.Label("", html_for="offset_samples", width=label_width,id='model_feature_label'),
-    dbc.Col(html.Div(id='model_parameters'),width=input_width,className="m-1"),],
-    row=True,)
-
-model_contamination_form = dbc.FormGroup(
-    [dbc.Label("Contamination:", html_for="model_contamination", width=label_width,),
-    dbc.Col(dcc.Slider(id='model_contamination',min=0.001,max=0.2,
-    step=0.01,
-    marks={
-    0.001: '0.001',
-    0.1: '0.1',
-    0.2: '0.2'
-    },
-    value=0.1,
-    tooltip={'placement':'top'}
-    )
-    ,width=input_width,
-    className="t-1"),],
-    row=True,)
-
 train_btn = dbc.Button("Train", id="train_btn",  color="success",block=True, className="m-2")
 
-# alert_model_trained = dbc.Alert(
-#             html.H5("Model Has been Trained!"),
-#             id="alert_model_trained",
-#             is_open=False,
-#             duration=5000,
-#         )
 
 model_form = html.Div(id='model_form',)
 train_card=dbc.Card([
