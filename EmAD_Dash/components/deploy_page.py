@@ -1,5 +1,5 @@
 from components.test_page import *
-
+import os
 
 
 ''' Defining the Model training and testing interface '''
@@ -15,10 +15,30 @@ deploy_page_container = html.Div(
                         html.Hr(),
                         # deploy_model_info_table(),
                         html.Div(id='deploy_model_info'),
-                        dbc.Button("Download Model", id="download_model", size="lg",color="success",block=False, className="mx-2 mt-1"),
+                        html.A(dbc.Button("Download Model", id="download_model", size="lg",color="success",block=True, className="mt-1 px-2",),
+                        href=os.path.join('model.joblib'),download="model.joblib", className="px-2 mx-0"),
+                            
                         html.Hr(),
-                        dbc.Button("Download Test.py", id="download_test", size="sm",outline=True, color="info",block=False, className="mx-4 mt-1"),
-                        dbc.Button("Download Setup.sh", id="download_setup", size="sm",outline=True, color="info", className="mx-4 my-4"),
+
+                        html.A(dbc.Button("Download example.py", id="download_example", size="sm",outline=True,color="info",block=True, className="my-2 px-1",),
+                        href=os.path.join('example.py'),download="example.py", className="px-4 mx-0"),
+
+                        html.A(dbc.Button("test_model.py", id="download_test_model", size="sm",outline=True,color="info",block=True, className="my-2 px-1",),
+                                href=os.path.join('test_model.py'),download="test_model.py", className="px-4 mx-0"),
+                        
+                        dbc.Row([
+                            dbc.Col(
+                                html.A(dbc.Button("Xtest", id="download_xte", size="sm",outline=True,color="info",block=True, className="my-1 pl-1",),
+                                href=os.path.join('xte.joblib'),download="xte.joblib", className="px-0 mx-0"),
+                                className="pl-4"),
+                            dbc.Col(
+                                html.A(dbc.Button("Ytest", id="download_yte", size="sm",outline=True,color="info",block=True, className="my-1 pr-1",),
+                                href=os.path.join('yte.joblib'),download="yte.joblib", className="px-0 mx-0"),
+                                className="pr-4"),
+                        ],className="px-0 mx-0"),
+
+                        html.A(dbc.Button("Download Setup.sh", id="download_setup", size="sm",outline=True,color="warning",block=True, className="mt-1 mb-4 px-4",),
+                        href=os.path.join('setup.sh'),download="setup.sh", className="px-4 mx-0"),
 
                     ], color="success", outline=True)
                 ,width={"size": 4, "offset": 4})
@@ -44,4 +64,9 @@ def deploy_callbacks(app):
         [Input("deploy_signal", "data")]
     )
     def save_deploy_model(val):
+        from joblib import dump
+        dump(DataStorage.deploy_model, 'model.joblib')
+        dump(DataStorage.xte.to_numpy(), 'xte.joblib')
+        if DataStorage.yte is not None:
+            dump(DataStorage.yte.to_numpy(), 'yte.joblib')
         return deploy_model_info_table()

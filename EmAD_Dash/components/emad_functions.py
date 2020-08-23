@@ -20,6 +20,10 @@ class emadModel:
         self.inference_time = 0
         self.auc = 0
         self.pan = 0
+        self.tn = 0
+        self.fp = 0
+        self.fn = 0
+        self.tp = 0
 
 class DataStorage:
     loaded_data = {}
@@ -30,11 +34,7 @@ class DataStorage:
     source_name='' # Data Source Name
     model_list = []
     deploy_model = emadModel('temp', None)
-    
-
-
-        
-
+         
 
 def update_scatter_matrix(dfx,dfy):
     if dfy is None: 
@@ -263,6 +263,10 @@ def generate_test_table():
      html.Th("Inference Time(ms)"),
      html.Th("AUC Score"),
      html.Th("Precision @ n "),
+     html.Th("TN"),
+     html.Th("FP"),
+     html.Th("FN"),
+     html.Th("TP"),
      ]))
     ]
     rows = []
@@ -277,6 +281,10 @@ def generate_test_table():
          html.Td('%.4f'%(mod.inference_time)),
          html.Td('%.3f'%(mod.auc)),
          html.Td('%.3f'%(mod.pan)),
+         html.Td(mod.tn),
+         html.Td(mod.fp),
+         html.Td(mod.fn),
+         html.Td(mod.tp),
          ]))
 
     table_body = [html.Tbody(rows)]
@@ -285,7 +293,7 @@ def generate_test_table():
 
 def test_models():
     from pyod.utils.utility import precision_n_scores
-    from sklearn.metrics import roc_auc_score
+    from sklearn.metrics import roc_auc_score, confusion_matrix
     xte = DataStorage.xte.to_numpy()
     for mod in DataStorage.model_list:
         t=time()
@@ -293,6 +301,8 @@ def test_models():
         mod.inference_time = ((time() - t)*1000)/np.shape(xte)[0]
         mod.auc = roc_auc_score(DataStorage.yte, scores)
         mod.pan = precision_n_scores(DataStorage.yte, scores)
+        y_pre = mod.clf.predict(xte)
+        mod.tn, mod.fp, mod.fn, mod.tp = confusion_matrix(DataStorage.yte,y_pre).ravel()
 
 
 def deploy_model_info_table():
