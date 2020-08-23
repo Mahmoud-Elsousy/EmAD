@@ -18,6 +18,8 @@ select_model = html.Div([
             {'label': 'one-class SVM (OCSVM)', 'value': 'ocsvm'},
             {'label': 'LMDD', 'value': 'lmdd'},
             {'label': 'Local Outlier Factor (LOF)', 'value': 'lof'},
+            {'label': 'Connectivity-Based Outlier Factor (COF)', 'value': 'cof'},
+            {'label': 'Clustering Based Local Outlier Factor (CBLOF)', 'value': 'cblof'},
         ],
         value=''
     ),
@@ -258,6 +260,41 @@ def generate_lof_panel():
     return lof_panels
 
 
+# 6- COF
+def generate_cof_panel():
+# pyod.models.lmdd.LMDD(contamination=0.1, n_iter=50, dis_measure='aad', random_state=None)
+    cof_neighbers_input = dbc.FormGroup(
+    [dbc.Label("Neighbers:", html_for="cof_neighbers_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="cof_neighbers_input", value=20, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    add_cof_btn = dbc.Button("Add Model", id="add_cof_btn",  color="success",block=True, className="m-2")
+    cof_panels = dbc.Form([cof_neighbers_input,model_contamination_form,add_cof_btn])
+    return cof_panels
+
+# 7- CBLOF
+def generate_cblof_panel():
+# pyod.models.cblof.CBLOF(n_clusters=8, contamination=0.1, alpha=0.9, beta=5,use_weights=False, random_state=None)
+    cblof_clusters_input = dbc.FormGroup(
+    [dbc.Label("Clusters:", html_for="cblof_clusters_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="cblof_clusters_input", value=20, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    cblof_alpha_input = dbc.FormGroup(
+    [dbc.Label("Clusters:", html_for="cblof_alpha_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="cblof_alpha_input", value=0.9, step=0.1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    cblof_beta_input = dbc.FormGroup(
+    [dbc.Label("Clusters:", html_for="cblof_beta_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="cblof_beta_input", value=5, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    add_cblof_btn = dbc.Button("Add Model", id="add_cblof_btn",  color="success",block=True, className="m-2")
+    cof_panels = dbc.Form([cblof_clusters_input, cblof_alpha_input, cblof_beta_input, model_contamination_form,add_cblof_btn])
+    return cof_panels
+
+
 ''' Defining Models Interfaces'''
 
 
@@ -285,8 +322,16 @@ def model_tabs_callbacks(app):
             return lmdd_panel
 
         if(value=="lof"):
-            lmdd_panel = generate_lof_panel()
-            return lmdd_panel
+            lof_panel = generate_lof_panel()
+            return lof_panel
+
+        if(value=="cof"):
+            cof_panel = generate_cof_panel()
+            return cof_panel
+
+        if(value=="cblof"):
+            panel = generate_cblof_panel()
+            return panel
 
 
         else:
@@ -330,6 +375,8 @@ def model_tabs_callbacks(app):
         Input('ocsvm_add_signal', 'data'),
         Input('lmdd_add_signal', 'data'),
         Input('lof_add_signal', 'data'),
+        Input('cof_add_signal', 'data'),
+        Input('cblof_add_signal', 'data'),
         Input('train_signal', 'data')]
     ) 
     def update_added_models_table(*args):
@@ -437,6 +484,44 @@ def model_tabs_callbacks(app):
             from pyod.models.lof import LOF
             clf = LOF(contamination=contamination, n_neighbors=neighbers, leaf_size=leaf, algorithm=algorithm)
             name = 'LOF ({},{},{},{})'.format(contamination,neighbers,leaf,algorithm)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 6- COF Callback
+    @app.callback( #lmdd_iteration_input,lmdd_radio,model_contamination_form,add_lmdd_btn
+        Output('cof_add_signal', 'data'),
+        [Input("add_cof_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("cof_neighbers_input", "value")]
+    ) 
+    def add_cof_clbk(n,contamination,neighbers):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.cof import COF
+            clf = COF(contamination=contamination, n_neighbors=neighbers)
+            name = 'COF ({},{})'.format(contamination,neighbers)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 7- CBLOF Callback
+    @app.callback( #lmdd_iteration_input,lmdd_radio,model_contamination_form,add_lmdd_btn
+        Output('cblof_add_signal', 'data'),
+        [Input("add_cblof_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("cblof_clusters_input", "value"),
+        State("cblof_alpha_input", "value"),
+        State("cblof_beta_input", "value")]
+    ) 
+    def add_cblof_clbk(n,contamination,clusters,alpha,beta):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.cblof import CBLOF
+            clf = CBLOF(contamination=contamination, n_clusters=clusters, alpha=alpha,beta=beta,random_state=random_state)
+            name = 'CBLOF ({},{},{},{})'.format(contamination,clusters,alpha,beta)
             DataStorage.model_list.append(emadModel(name,clf))
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}

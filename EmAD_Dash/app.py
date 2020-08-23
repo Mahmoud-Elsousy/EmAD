@@ -71,6 +71,8 @@ dcc.Store(id='mcd_add_signal'),
 dcc.Store(id='ocsvm_add_signal'),
 dcc.Store(id='lmdd_add_signal'),
 dcc.Store(id='lof_add_signal'),
+dcc.Store(id='cof_add_signal'),
+dcc.Store(id='cblof_add_signal'),
 dcc.Store(id='train_signal'),
 dcc.Store(id='test_signal'),
 dcc.Store(id='deploy_signal'),
@@ -108,10 +110,6 @@ def render_page_content(pathname):
             html.P(f"The pathname {pathname} was not recognised..."),
         ]
     )
-
-'''Taps callbacks '''
-
-'''Taps callbacks '''
 
 
 if __name__ == "__main__":
