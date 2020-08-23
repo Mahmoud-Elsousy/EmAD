@@ -16,10 +16,15 @@ select_model = html.Div([
             {'label': 'Principal component analysis(PCA) ', 'value': 'pca'},
             {'label': 'Minimum Covariance Determinant(MCD)', 'value': 'mcd'},
             {'label': 'one-class SVM (OCSVM)', 'value': 'ocsvm'},
-            {'label': 'LMDD', 'value': 'lmdd'},
-            {'label': 'Local Outlier Factor (LOF)', 'value': 'lof'},
-            {'label': 'Connectivity-Based Outlier Factor (COF)', 'value': 'cof'},
-            {'label': 'Clustering Based Local Outlier Factor (CBLOF)', 'value': 'cblof'},
+            {'label': 'Linear Method for Deviation-based OD(LMDD)', 'value': 'lmdd'},
+            {'label': 'Local Outlier Factor(LOF)', 'value': 'lof'},
+            {'label': 'Connectivity-Based Outlier Factor(COF)', 'value': 'cof'},
+            {'label': 'Clustering Based Local Outlier Factor(CBLOF)', 'value': 'cblof'},
+            {'label': 'Histogram- based outlier detection(HBOS)', 'value': 'hbos'},
+            {'label': 'k-Nearest Neighbors(KNN)', 'value': 'knn'},
+            {'label': 'Angle-base Outlier Detection(ABOD)', 'value': 'abod'},
+            {'label': 'Isolation Forest OD(IForest)', 'value': 'iforest'},
+            {'label': 'Feature bagging detector(FB)', 'value': 'fb'},
         ],
         value=''
     ),
@@ -281,18 +286,155 @@ def generate_cblof_panel():
     row=True)
 
     cblof_alpha_input = dbc.FormGroup(
-    [dbc.Label("Clusters:", html_for="cblof_alpha_input", width=label_width+2,),
+    [dbc.Label("Alpha:", html_for="cblof_alpha_input", width=label_width+2,),
     dbc.Col(dbc.Input(type="number", id="cblof_alpha_input", value=0.9, step=0.1,),width=input_width-2,className="m-1"),],
     row=True)
 
     cblof_beta_input = dbc.FormGroup(
-    [dbc.Label("Clusters:", html_for="cblof_beta_input", width=label_width+2,),
+    [dbc.Label("Beta:", html_for="cblof_beta_input", width=label_width+2,),
     dbc.Col(dbc.Input(type="number", id="cblof_beta_input", value=5, step=1,),width=input_width-2,className="m-1"),],
     row=True)
 
     add_cblof_btn = dbc.Button("Add Model", id="add_cblof_btn",  color="success",block=True, className="m-2")
     cof_panels = dbc.Form([cblof_clusters_input, cblof_alpha_input, cblof_beta_input, model_contamination_form,add_cblof_btn])
     return cof_panels
+
+# 8- HBOS
+def generate_hbos_panel():
+# pyod.models.hbos.HBOS(n_bins=10, alpha=0.1, tol=0.5, contamination=0.1)
+    hbos_bins_input = dbc.FormGroup(
+    [dbc.Label("Bins:", html_for="hbos_bins_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="hbos_bins_input", value=10, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    hbos_alpha_input = dbc.FormGroup(
+    [dbc.Label("Alpha:", html_for="hbos_alpha_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="hbos_alpha_input", value=0.1, step=0.1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    hbos_tol_input = dbc.FormGroup(
+    [dbc.Label("Tolerance:", html_for="hbos_tol_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="hbos_tol_input", value=0.5, step=0.1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    add_hbos_btn = dbc.Button("Add Model", id="add_hbos_btn",  color="success",block=True, className="m-2")
+    cof_panels = dbc.Form([hbos_bins_input, hbos_alpha_input,hbos_tol_input, model_contamination_form,add_hbos_btn])
+    return cof_panels
+
+
+
+# 9- KNN
+def generate_knn_panel():
+# pyod.models.knn.KNN(contamination=0.1, n_neighbors=5, method='largest', algorithm='auto',metric='minkowski')
+    knn_neighbers_input = dbc.FormGroup(
+    [dbc.Label("Neighbers:", html_for="knn_neighbers_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="knn_neighbers_input", value=5, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    knn_algorithm_radio = dbc.FormGroup([
+        dbc.Label("Algorithm:"),
+        dbc.RadioItems(
+            id="knn_algorithm_radio",
+            options=[
+                {"label": "Auto", "value": 'auto'},
+                {"label": "BallTree", "value": 'ball_tree'},
+                {"label": "KDTree", "value": 'kd_tree'},
+                {"label": "Brute-force", "value": 'brute'},
+            ],
+            value='auto',
+            className="px-3",
+            # inline=True,
+        ),])
+
+    knn_method_radio = dbc.FormGroup([
+        dbc.Label("Method:"),
+        dbc.RadioItems(
+            id="knn_method_radio",
+            options=[
+                {"label": "Largest", "value": 'largest'},
+                {"label": "Mean", "value": 'mean'},
+                {"label": "Median", "value": 'median'},
+            ],
+            value='largest',
+            className="px-3",
+            # inline=True,
+        ),])
+
+    knn_metric_input = dbc.FormGroup(
+    [dbc.Label("Metric:", html_for="knn_metric_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="text", id="knn_metric_input", value='minkowski'),width=input_width-2,className="m-1"),],
+    row=True)    
+
+    add_knn_btn = dbc.Button("Add Model", id="add_knn_btn",  color="success",block=True, className="m-2")
+    panel = dbc.Form([knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input, model_contamination_form,add_knn_btn])
+    return panel
+
+# 10- ABOD
+def generate_abod_panel():
+# pyod.models.abod.ABOD(contamination=0.1, n_neighbors=5, method='fast')
+    abod_neighbers_input = dbc.FormGroup(
+    [dbc.Label("Neighbers:", html_for="abod_neighbers_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="abod_neighbers_input", value=5, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    abod_radio = dbc.FormGroup([
+        dbc.Label("Algorithm:"),
+        dbc.RadioItems(
+            id="abod_radio",
+            options=[
+                {"label": "Fast", "value": 'fast'},
+                {"label": "Default", "value": 'default'},
+            ],
+            value='fast',
+            className="px-3",
+            # inline=True,
+        ),])
+
+    add_abod_btn = dbc.Button("Add Model", id="add_abod_btn",  color="success",block=True, className="m-2")
+    panel = dbc.Form([abod_neighbers_input, abod_radio,model_contamination_form,add_abod_btn])
+    return panel
+
+# 11- IForest
+def generate_iforest_panel():
+# pyod.models.iforest.IForest(n_estimators=100, contamination=0.1, bootstrap=False,)
+    iforest_estimators_input = dbc.FormGroup(
+    [dbc.Label("Estimators:", html_for="iforest_estimators_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="iforest_estimators_input", value=100, step=10,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    iforest_switch = dbc.Checklist(options=[{"label": "Bootstrap: ", "value": 1},],value=[],id="iforest_switch",switch=True,)
+
+
+    add_iforest_btn = dbc.Button("Add Model", id="add_iforest_btn",  color="success",block=True, className="m-2")
+    panel = dbc.Form([iforest_estimators_input, iforest_switch,model_contamination_form,add_iforest_btn])
+    return panel
+
+# 12- Feature Bagging
+def generate_fb_panel():
+# pyod.models.iforest.IForest(n_estimators=100, contamination=0.1, bootstrap=False,)
+    fb_estimators_input = dbc.FormGroup(
+    [dbc.Label("Estimators:", html_for="fb_estimators_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="fb_estimators_input", value=10, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    fb_switch = dbc.Checklist(options=[{"label": "Bootstrap: ", "value": 1},],value=[],id="fb_switch",switch=True,)
+
+    fb_radio = dbc.FormGroup([
+        dbc.Label("Combination:"),
+        dbc.RadioItems(
+            id="fb_radio",
+            options=[
+                {"label": "Average", "value": 'average'},
+                {"label": "Max", "value": 'max'},
+            ],
+            value='average',
+            className="px-3",
+            inline=True,
+        ),])
+
+    add_fb_btn = dbc.Button("Add Model", id="add_fb_btn",  color="success",block=True, className="m-2")
+    panel = dbc.Form([fb_estimators_input, fb_switch, fb_radio, model_contamination_form,add_fb_btn])
+    return panel
 
 
 ''' Defining Models Interfaces'''
@@ -331,6 +473,26 @@ def model_tabs_callbacks(app):
 
         if(value=="cblof"):
             panel = generate_cblof_panel()
+            return panel
+
+        if(value=="hbos"):
+            panel = generate_hbos_panel()
+            return panel
+
+        if(value=="knn"):
+            panel = generate_knn_panel()
+            return panel
+
+        if(value=="abod"):
+            panel = generate_abod_panel()
+            return panel
+
+        if(value=="iforest"):
+            panel = generate_iforest_panel()
+            return panel
+
+        if(value=="fb"):
+            panel = generate_fb_panel()
             return panel
 
 
@@ -377,6 +539,11 @@ def model_tabs_callbacks(app):
         Input('lof_add_signal', 'data'),
         Input('cof_add_signal', 'data'),
         Input('cblof_add_signal', 'data'),
+        Input('hbos_add_signal', 'data'),
+        Input('knn_add_signal', 'data'),
+        Input('abod_add_signal', 'data'),
+        Input('iforest_add_signal', 'data'),
+        Input('fb_add_signal', 'data'),
         Input('train_signal', 'data')]
     ) 
     def update_added_models_table(*args):
@@ -525,6 +692,106 @@ def model_tabs_callbacks(app):
             DataStorage.model_list.append(emadModel(name,clf))
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}
+
+    # 8- HBOS Callback
+    @app.callback(
+        Output('hbos_add_signal', 'data'),
+        [Input("add_hbos_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("hbos_bins_input", "value"),
+        State("hbos_alpha_input", "value"),
+        State("hbos_tol_input", "value")]
+    ) 
+    def add_cblof_clbk(n,contamination,bins,alpha,tol):
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.hbos import HBOS
+            clf = HBOS(contamination=contamination, n_bins=bins, alpha=alpha,tol=tol)
+            name = 'HBOS ({},{},{},{})'.format(contamination,bins,alpha,tol)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 9- KNN Callback
+    @app.callback(
+        Output('knn_add_signal', 'data'),
+        [Input("add_knn_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("knn_neighbers_input", "value"),
+        State("knn_algorithm_radio", "value"),
+        State("knn_method_radio", "value"),
+        State("knn_metric_input", "value")]
+    ) 
+    def add_knn_clbk(n,contamination,neighbers,algorithm,method,metric):#[knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input,
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.knn import KNN
+            clf = KNN(contamination=contamination, n_neighbors=neighbers, algorithm=algorithm,method=method, metric=metric)
+            name = 'KNN ({},{},{},{})'.format(contamination,neighbers,algorithm,method,metric)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 10- ABOD Callback
+    @app.callback(
+        Output('abod_add_signal', 'data'),
+        [Input("add_abod_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("abod_neighbers_input", "value"),
+        State("abod_radio", "value"),]
+    ) 
+    def add_knn_clbk(n,contamination,neighbers,radio):#[knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input,
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.abod import ABOD
+            clf = ABOD(contamination=contamination, n_neighbors=neighbers, method=radio)
+            name = 'ABOD ({},{},{})'.format(contamination,neighbers,radio)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 11- IForest Callback
+    @app.callback(
+        Output('iforest_add_signal', 'data'),
+        [Input("add_iforest_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("iforest_estimators_input", "value"),
+        State("iforest_switch", "value"),]
+    ) 
+    def add_iforest_clbk(n,contamination,estimators,bootstrap):#[knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input,
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.iforest import IForest
+            clf = IForest(contamination=contamination, n_estimators=estimators, bootstrap=(1 in bootstrap),random_state=random_state)
+            name = 'IForest ({},{},{})'.format(contamination,estimators,(1 in bootstrap))
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
+    # 12- Feature Bagging Callback
+    @app.callback(
+        Output('fb_add_signal', 'data'),
+        [Input("add_fb_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("fb_estimators_input", "value"),
+        State("fb_radio", "value"),
+        State("fb_switch", "value"),]
+    ) 
+    def add_fb_clbk(n,contamination,estimators,combination,bootstrap):#[knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input,
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.feature_bagging import FeatureBagging
+            clf = FeatureBagging(contamination=contamination, n_estimators=estimators, bootstrap_features=(1 in bootstrap),combination=combination , random_state=random_state)
+            name = 'FB ({},{},{},{})'.format(contamination,estimators,combination,(1 in bootstrap))
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
+
 
 
     @app.callback(
