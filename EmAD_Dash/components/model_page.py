@@ -25,6 +25,7 @@ select_model = html.Div([
             {'label': 'Angle-base Outlier Detection(ABOD)', 'value': 'abod'},
             {'label': 'Isolation Forest OD(IForest)', 'value': 'iforest'},
             {'label': 'Feature bagging detector(FB)', 'value': 'fb'},
+            {'label': 'Subspace outlier detection(SOD) ', 'value': 'sod'},
         ],
         value=''
     ),
@@ -436,6 +437,29 @@ def generate_fb_panel():
     panel = dbc.Form([fb_estimators_input, fb_switch, fb_radio, model_contamination_form,add_fb_btn])
     return panel
 
+# 13- SOD
+def generate_sod_panel():
+# pyod.models.sod.SOD(contamination=0.1, n_neighbors=20, ref_set=10, alpha=0.8)
+    sod_neighbers_input = dbc.FormGroup(
+    [dbc.Label("Neighbers:", html_for="sod_neighbers_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="sod_neighbers_input", value=20, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    sod_refset_input = dbc.FormGroup(
+    [dbc.Label("Reference Set:", html_for="sod_refset_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="sod_refset_input", value=10, step=1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+    sod_alpha_input = dbc.FormGroup(
+    [dbc.Label("Estimators:", html_for="sod_alpha_input", width=label_width+2,),
+    dbc.Col(dbc.Input(type="number", id="sod_alpha_input", value=0.8, step=0.1,),width=input_width-2,className="m-1"),],
+    row=True)
+
+
+    add_sod_btn = dbc.Button("Add Model", id="add_sod_btn",  color="success",block=True, className="m-2")
+    panel = dbc.Form([sod_neighbers_input, sod_refset_input, sod_alpha_input, model_contamination_form,add_sod_btn])
+    return panel
+
 
 ''' Defining Models Interfaces'''
 
@@ -495,6 +519,10 @@ def model_tabs_callbacks(app):
             panel = generate_fb_panel()
             return panel
 
+        if(value=="sod"):
+            panel = generate_sod_panel()
+            return panel
+
 
         else:
             return html.H4('Select Model to Add', className='mx-auto')
@@ -542,6 +570,7 @@ def model_tabs_callbacks(app):
         Input('hbos_add_signal', 'data'),
         Input('knn_add_signal', 'data'),
         Input('abod_add_signal', 'data'),
+        Input('sod_add_signal', 'data'),
         Input('iforest_add_signal', 'data'),
         Input('fb_add_signal', 'data'),
         Input('train_signal', 'data')]
@@ -792,7 +821,25 @@ def model_tabs_callbacks(app):
             # print(DataStorage.model_list) # Debug
             return '', {'added': True}
 
-
+    # 13- SOD Callback
+    @app.callback(
+        Output('sod_add_signal', 'data'),
+        [Input("add_sod_btn", "n_clicks")],
+        [State("model_contamination", "value"),
+        State("sod_neighbers_input", "value"),
+        State("sod_refset_input", "value"),
+        State("sod_alpha_input", "value"),]
+    ) 
+    def add_sod_clbk(n,contamination,neighbers,refset,alpha):#[knn_neighbers_input, knn_algorithm_radio, knn_method_radio, knn_metric_input,
+        if (n is None):
+            raise PreventUpdate
+        else:
+            from pyod.models.sod import SOD
+            clf = SOD(contamination=contamination, n_neighbors=neighbers, ref_set=refset, alpha=alpha)
+            name = 'SOD ({},{},{},{})'.format(contamination,neighbers,refset,alpha)
+            DataStorage.model_list.append(emadModel(name,clf))
+            # print(DataStorage.model_list) # Debug
+            return '', {'added': True}
 
     @app.callback(
     [Output('loading', 'children'),
