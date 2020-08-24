@@ -1,0 +1,72 @@
+Start Time:  1598231327.2159355
+
+... Processing arrhythmia.mat ... Iteration 1
+
+... Processing arrhythmia.mat ... Iteration 2
+
+... Processing cardio.mat ... Iteration 1
+
+... Processing cardio.mat ... Iteration 2
+
+... Processing glass.mat ... Iteration 1
+
+... Processing glass.mat ... Iteration 2
+
+... Processing ionosphere.mat ... Iteration 1
+
+... Processing ionosphere.mat ... Iteration 2
+
+... Processing letter.mat ... Iteration 1
+
+... Processing letter.mat ... Iteration 2
+
+... Processing lympho.mat ... Iteration 1
+
+... Processing lympho.mat ... Iteration 2
+
+... Processing mnist.mat ... Iteration 1
+
+... Processing mnist.mat ... Iteration 2
+
+... Processing musk.mat ... Iteration 1
+
+... Processing musk.mat ... Iteration 2
+
+... Processing optdigits.mat ... Iteration 1
+
+... Processing optdigits.mat ... Iteration 2
+
+... Processing pendigits.mat ... Iteration 1
+
+... Processing pendigits.mat ... Iteration 2
+
+... Processing pima.mat ... Iteration 1
+
+... Processing pima.mat ... Iteration 2
+
+... Processing satellite.mat ... Iteration 1
+
+... Processing satellite.mat ... Iteration 2
+
+... Processing satimage-2.mat ... Iteration 1
+
+... Processing satimage-2.mat ... Iteration 2
+
+... Processing shuttle.mat ... Iteration 1
+
+... Processing shuttle.mat ... Iteration 2
+
+... Processing vertebral.mat ... Iteration 1
+
+... Processing vertebral.mat ... Iteration 2
+
+... Processing vowels.mat ... Iteration 1
+
+... Processing vowels.mat ... Iteration 2
+
+... Processing wbc.mat ... Iteration 1
+
+... Processing wbc.mat ... Iteration 2
+End Time:  1598239246.4852257
+Test Total Time:  7919.2692902088165
+

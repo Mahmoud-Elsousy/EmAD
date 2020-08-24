@@ -32,7 +32,15 @@ RUN conda install -y -c numba numba
 
 RUN conda install -y scikit-learn matplotlib pandas jupyterlab
 
-RUN pip install pyod -i https://www.piwheels.org/simple
+RUN pip install pyod nose -i https://www.piwheels.org/simple
+
+COPY Brotli-1.0.7-cp36-cp36m-linux_armv7l.whl Brotli-1.0.7-cp36-cp36m-linux_armv7l.whl
+
+RUN pip install Brotli-1.0.7-cp36-cp36m-linux_armv7l.whl
+
+RUN pip install dash
+
+RUN pip install dash-bootstrap-components
 
 RUN conda clean -tipsy \
     && find /root/berryconda3/ -type f,l -name '*.a' -delete \
@@ -42,9 +50,12 @@ RUN conda clean -tipsy \
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8888
+ADD EmAD_Dash /emad/EmAD_Dash
+
+EXPOSE 4444
 
 EXPOSE 9999
 
+ENTRYPOINT ["python", "/emad/EmAD_Dash/app.py"]
 
 # ENTRYPOINT ["jupyter-lab", "--ip=*", "--allow-root", "--no-browser"]
