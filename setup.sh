@@ -7,17 +7,17 @@ mkdir emad;cd emad
 apt update
 apt install -y wget bzip2
 
-# 3- Download Berryconda3, make it executable, and Install it
+# 3- Download Berryconda3, make it executable, Install it, and delete it
 wget https://github.com/jjhelmus/berryconda/releases/download/v2.0.0/Berryconda3-2.0.0-Linux-armv7l.sh
 chmod +x Berryconda3-2.0.0-Linux-armv7l.sh
 ./Berryconda3-2.0.0-Linux-armv7l.sh -b
+rm Berryconda3-2.0.0-Linux-armv7l.sh
 
-# 4- Export berryconda path
-export PATH="/root/berryconda3/bin:$PATH"
+# 4- Export berryconda path, this will make the conda installation the defualt
+export PATH="$HOME/berryconda3/bin:$PATH"
 
 # 5- Update conda
-conda update conda
-conda info
+conda update -y conda
 
 # 6- Update pip from conda v9.x -> v18.x
 conda update -y pip
@@ -32,13 +32,14 @@ conda install -y scikit-learn matplotlib pandas
 # 9- Install pyod from piwheels for fast installation
 pip install pyod -i https://www.piwheels.org/simple
 
-# 10- Start Jupyterlab for development
-# jupyter-lab --ip=* --allow-root --no-browser --port 9999
+# 10- Install nose from piwheels for fast installation
+pip install nose -i https://www.piwheels.org/simple
 
-# ADD RASPI Repository
-nano /etc/apt/sources.list
+# 11- Clean after installation to save space
+conda clean -tipsy \
+&& find /root/berryconda3/ -type f,l -name '*.a' -delete \
+&& find /root/berryconda3/ -type f,l -name '*.pyc' -delete \
+&& find /root/berryconda3/ -type f,l -name '*.js.map' -delete \
+&& rm -rf /root/berryconda3/pkgs
 
-deb http://archive.raspbian.org/raspbian buster main contrib non-free
-deb-src http://archive.raspbian.org/raspbian buster main contrib non-free
-
-wget https://archive.raspbian.org/raspbian.public.key -O - | sudo apt-key add -apt
+apt-get clean && rm -rf /var/lib/apt/lists/*
