@@ -56,6 +56,6 @@ EXPOSE 4444
 
 EXPOSE 9999
 
-ENTRYPOINT ["python", "/emad/EmAD_Dash/app.py"]
+ENTRYPOINT ["python", "/emad/EmAD_Dash/appfull.py"]
 
 # ENTRYPOINT ["jupyter-lab", "--ip=*", "--allow-root", "--no-browser"]
