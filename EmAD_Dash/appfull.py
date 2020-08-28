@@ -19,8 +19,8 @@ from io import StringIO
 random_state = np.random.RandomState(3)
 from time import time
 
-# run_path = '/emad/EmAD_Dash/'
-run_path = ''
+run_path = '/emad/EmAD_Dash/'
+# run_path = ''
 
 class emadModel:
     def __init__(self, name, clf):
@@ -37,6 +37,11 @@ class emadModel:
         self.fp = 0
         self.fn = 0
         self.tp = 0
+        self.b1 = 0
+        self.b10 = 0
+        self.b100 = 0
+        self.b1000 = 0
+
 
 class DataStorage:
     loaded_data = {}
@@ -255,14 +260,18 @@ def generate_model_table():
 
 def train_models():
     import pickle
+    from joblib import dump
     import sys
 
+    i=0
     for mod in DataStorage.model_list:
         t=time() 
         mod.clf.fit(DataStorage.xtr)
         t = time() - t
         p = pickle.dumps(mod.clf)
         mod.size = sys.getsizeof(p)/1000
+        i+=1
+        # dump(mod.clf, 'mod%d.clf'%(i))
         mod.isTrained = 'Yes'
         mod.training_time = t
 
@@ -273,9 +282,12 @@ def generate_test_table():
      html.Th("Trained?"),
      html.Th("Size(KB)"),
      html.Th("Training Time(s)"),
-     html.Th("Inference Time(ms)"),
      html.Th("AUC Score"),
      html.Th("Precision @ n "),
+     html.Th("B1"),
+     html.Th("B10"),
+     html.Th("B100"),
+     html.Th("B100"),
      html.Th("TN"),
      html.Th("FP"),
      html.Th("FN"),
@@ -291,9 +303,12 @@ def generate_test_table():
          html.Td(mod.isTrained),
          html.Td('%.2f'%(mod.size)),
          html.Td('%.2f'%(mod.training_time)),
-         html.Td('%.4f'%(mod.inference_time)),
          html.Td('%.3f'%(mod.auc)),
          html.Td('%.3f'%(mod.pan)),
+         html.Td('%.3f'%(mod.b1)),
+         html.Td('%.3f'%(mod.b10)),
+         html.Td('%.3f'%(mod.b100)),
+         html.Td('%.5f'%(mod.b1000)),
          html.Td(mod.tn),
          html.Td(mod.fp),
          html.Td(mod.fn),
@@ -304,14 +319,31 @@ def generate_test_table():
     return dbc.Table(table_header + table_body, bordered=True, hover=True,responsive=True)
 
 
+def batch_inference_time(model, xte, batch_size=1):
+    average_time = 0
+    n_batches = int(xte.shape[0]/batch_size)
+    for i in range(n_batches):
+        batch = xte[(i*batch_size):((i+1)*batch_size),:]
+        t=time()
+        model.predict(batch)
+        inference_time = ((time() - t)*1000)/batch_size
+        average_time += inference_time
+    
+    return average_time/n_batches
+
+
 def test_models():
     from pyod.utils.utility import precision_n_scores
     from sklearn.metrics import roc_auc_score, confusion_matrix
     xte = DataStorage.xte.values
     for mod in DataStorage.model_list:
-        t=time()
-        scores = mod.clf.decision_function(xte) 
-        mod.inference_time = ((time() - t)*1000)/np.shape(xte)[0]
+        if 'COF' not in mod.name:
+            mod.b1 = batch_inference_time(mod.clf,xte,1)
+            mod.b10 = batch_inference_time(mod.clf,xte,10)
+        mod.b100 = batch_inference_time(mod.clf,xte,100)
+        mod.b1000 = batch_inference_time(mod.clf,xte,1000)
+        print('1:%f,10:%f,100:%f,100:%f'%(mod.b1,mod.b10,mod.b100,mod.b1000))
+
         mod.auc = roc_auc_score(DataStorage.yte, scores)
         mod.pan = precision_n_scores(DataStorage.yte, scores)
         y_pre = mod.clf.predict(xte)
@@ -359,7 +391,7 @@ n_train_form = dbc.FormGroup(
 
 n_test_form = dbc.FormGroup(
     [dbc.Label("Testing Samples:", html_for="testing_samples", width=label_width,),
-    dbc.Col(dbc.Input(type="number", id="n_test", value=500, step=100,),width=input_width,className="m-1"),],
+    dbc.Col(dbc.Input(type="number", id="n_test", value=1000, step=100,),width=input_width,className="m-1"),],
     row=True,)
 
 n_features_form = dbc.FormGroup(
@@ -374,7 +406,7 @@ n_clusters_form = dbc.FormGroup(
 
 offset_form = dbc.FormGroup(
     [dbc.Label("Offset:", html_for="offset_samples", width=label_width,),
-    dbc.Col(dbc.Input(type="number", id="offset", value=10, step=1,),width=input_width,className="m-1"),],
+    dbc.Col(dbc.Input(type="number", id="offset", value=1, step=1,),width=input_width,className="m-1"),],
     row=True,)
 
 contamination_form = dbc.FormGroup(
