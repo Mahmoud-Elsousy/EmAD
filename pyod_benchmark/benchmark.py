@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Benchmark of all implemented algorithms
-"""
-# Author: Yue Zhao <zhaoy@cmu.edu>
-# License: BSD 2 clause
+# Edited from: https://github.com/yzhao062/pyod/blob/master/notebooks/benchmark.py
 
 from __future__ import division
 from __future__ import print_function
@@ -39,10 +35,8 @@ from pyod.models.cof import COF
 from pyod.models.sod import SOD
 
 from pyod.utils.utility import standardizer
-from pyod.utils.utility import precision_n_scores
-from sklearn.metrics import roc_auc_score
 
-# TODO: add neural networks, LOCI, SOS, COF, SOD
+
 
 # Define data file and read X and y
 mat_file_list = ['arrhythmia.mat',
@@ -140,35 +134,16 @@ for j in range(len(mat_file_list)):
         for clf_name, clf in classifiers.items():
             t0 = time()
             clf.fit(X_train_norm)
-            # test_scores = clf.decision_function(X_test_norm)
             t1 = time()
             duration = round(t1 - t0, ndigits=4)
 
-            # roc = round(roc_auc_score(y_test, test_scores), ndigits=4)
-            # prn = round(precision_n_scores(y_test, test_scores), ndigits=4)
-
-            # print('{clf_name} ROC:{roc}, precision @ rank n:{prn}, '
-            #       'execution time: {duration}s'.format(
-            #     clf_name=clf_name, roc=roc, prn=prn, duration=duration))
-
             time_mat[i, classifiers_indices[clf_name]] = duration
-            # roc_mat[i, classifiers_indices[clf_name]] = roc
-            # prn_mat[i, classifiers_indices[clf_name]] = prn
 
     time_list = time_list + np.mean(time_mat, axis=0).tolist()
     temp_df = pd.DataFrame(time_list).transpose()
     temp_df.columns = df_columns
     time_df = pd.concat([time_df, temp_df], axis=0)
 
-    # roc_list = roc_list + np.mean(roc_mat, axis=0).tolist()
-    # temp_df = pd.DataFrame(roc_list).transpose()
-    # temp_df.columns = df_columns
-    # roc_df = pd.concat([roc_df, temp_df], axis=0)
-    #
-    # prn_list = prn_list + np.mean(prn_mat, axis=0).tolist()
-    # temp_df = pd.DataFrame(prn_list).transpose()
-    # temp_df.columns = df_columns
-    # prn_df = pd.concat([prn_df, temp_df], axis=0)
 
     # Save the results for each run
     time_df.to_csv('time.csv', index=False, float_format='%.3f')
