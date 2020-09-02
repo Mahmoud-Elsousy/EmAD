@@ -287,7 +287,7 @@ def generate_test_table():
      html.Th("B1"),
      html.Th("B10"),
      html.Th("B100"),
-     html.Th("B100"),
+     html.Th("B1000"),
      html.Th("TN"),
      html.Th("FP"),
      html.Th("FN"),
@@ -342,8 +342,8 @@ def test_models():
             mod.b10 = batch_inference_time(mod.clf,xte,10)
         mod.b100 = batch_inference_time(mod.clf,xte,100)
         mod.b1000 = batch_inference_time(mod.clf,xte,1000)
-        print('1:%f,10:%f,100:%f,100:%f'%(mod.b1,mod.b10,mod.b100,mod.b1000))
-
+        print('1:%f,10:%f,100:%f,1000:%f'%(mod.b1,mod.b10,mod.b100,mod.b1000))
+        scores = mod.clf.decision_function(xte) 
         mod.auc = roc_auc_score(DataStorage.yte, scores)
         mod.pan = precision_n_scores(DataStorage.yte, scores)
         y_pre = mod.clf.predict(xte)

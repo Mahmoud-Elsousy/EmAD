@@ -8,7 +8,7 @@ docker run -it --name EmAD_Dash -p 4444:4444 emad-dash-image
 
 #### 1. Anomaly Detection Algorithms available in EmAD:
 
-All the available algorithms in EmAD depend on PyOD's implementation, the following table lists all the available algorithms in EmAD, this is a subset of the implemented algorithms in PyOD.
+All the available algorithms in EmAD depend on [PyOD](https://pyod.readthedocs.io/en/latest/index.html)'s implementation, the following table lists all the available algorithms in EmAD, this is a subset of the implemented algorithms in PyOD.
 
 |    | Abbreviation |               Full name               |
 |----|:------------:|:-------------------------------------:|

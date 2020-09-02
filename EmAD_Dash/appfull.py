@@ -287,7 +287,7 @@ def generate_test_table():
      html.Th("B1"),
      html.Th("B10"),
      html.Th("B100"),
-     html.Th("B100"),
+     html.Th("B1000"),
      html.Th("TN"),
      html.Th("FP"),
      html.Th("FN"),
