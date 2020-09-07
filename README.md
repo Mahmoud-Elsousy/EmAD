@@ -3,7 +3,7 @@ This repository is hosting EmAD -Embedded Anomaly detection using Machine Learni
 
 ```bash
 docker run --rm --privileged hypriot/qemu-register
-docker run -it --name EmAD_Dash -p 4444:4444 emad-dash-image
+docker run -it --name EmAD_Dash -p 4444:4444 mahmoudelsousy/emad-dash-image
 ```
 
 #### 1. Anomaly Detection Algorithms available in EmAD:
