@@ -19,8 +19,8 @@ from io import StringIO
 random_state = np.random.RandomState(3)
 from time import time
 
+dn = os.path.abspath(os.getcwd())
 run_path = '/emad/EmAD_Dash/'
-# run_path = ''
 
 class emadModel:
     def __init__(self, name, clf):
@@ -119,6 +119,10 @@ def process_loaded_data(df,generate_headers=False,shuffle=False, labels=None, na
     if y is not None:
         xtr, xte, ytr, yte = train_test_split(df, y, test_size=(100-ratio)/100,shuffle=shuffle) 
         # The following step had to be calculated after the split to avoid data leakage betwean training and testing data.
+        ytr=ytr.to_frame()
+        ytr.columns=['Y']
+        yte=yte.to_frame()
+        yte.columns=['Y']
         if nan == 'average':
             xtr.fillna(xtr.mean(), inplace=True)
             xte.fillna(xte.mean(), inplace=True)
@@ -320,6 +324,7 @@ def generate_test_table():
 
 
 def batch_inference_time(model, xte, batch_size=1):
+    # TODO Check for sample number
     average_time = 0
     n_batches = int(xte.shape[0]/batch_size)
     for i in range(n_batches):
@@ -344,6 +349,7 @@ def test_models():
         mod.b1000 = batch_inference_time(mod.clf,xte,1000)
         print('1:%f,10:%f,100:%f,1000:%f'%(mod.b1,mod.b10,mod.b100,mod.b1000))
         scores = mod.clf.decision_function(xte) 
+        print(scores)
         mod.auc = roc_auc_score(DataStorage.yte, scores)
         mod.pan = precision_n_scores(DataStorage.yte, scores)
         y_pre = mod.clf.predict(xte)
@@ -358,7 +364,7 @@ def deploy_model_info_table():
     row1 = html.Tr([html.Td("Features #"), html.Td(dm.n_features)])
     row2 = html.Tr([html.Td("Size (Before Serialization)"), html.Td('%.3f'%(dm.size))])
     row3 = html.Tr([html.Td("Training Time(s)"), html.Td('%.3f'%(dm.training_time))])
-    row4 = html.Tr([html.Td("Inference Time(ms)"), html.Td(('%.4f'%dm.inference_time))])
+    row4 = html.Tr([html.Td("Inference Time/Sample(B100)(ms)"), html.Td(('%.4f'%dm.b100))])
     row5 = html.Tr([html.Td("AUC Score"), html.Td('%%%.1f'%(dm.auc*100))])
     row6 = html.Tr([html.Td("P@n Score"), html.Td('%%%.1f'%(dm.pan*100))])
 
@@ -1892,10 +1898,10 @@ def deploy_callbacks(app):
     )
     def save_deploy_model(val):
         from joblib import dump
-        dump(DataStorage.deploy_model, 'model.joblib')
-        dump(DataStorage.xte.values, 'xte.joblib')
+        dump(DataStorage.deploy_model, os.path.join(dn,"model.joblib"))
+        dump(DataStorage.xte.values, os.path.join(dn,"xte.joblib"))
         if DataStorage.yte is not None:
-            dump(DataStorage.yte.values, 'yte.joblib')
+            dump(DataStorage.yte.values,os.path.join(dn,"yte.joblib"))
         return deploy_model_info_table()
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -2020,16 +2026,15 @@ def send_test_model():
 
 @app.server.route("/xte.joblib") 
 def send_xte():
-    return send_file(run_path + 'xte.joblib',as_attachment=True)
+    return send_file(os.path.join(dn,"xte.joblib"),as_attachment=True)
 
 @app.server.route("/yte.joblib") 
 def send_yte():
-    return send_file(run_path + 'yte.joblib',as_attachment=True)
+    return send_file(os.path.join(dn,"yte.joblib"),as_attachment=True)
 
 @app.server.route("/model.joblib") 
 def send_model():
-    return send_file(run_path + 'model.joblib',as_attachment=True)
-
+    return send_file(os.path.join(dn,"model.joblib"),as_attachment=True)
 
 if __name__ == "__main__":
     app.run_server(port=4444, host='0.0.0.0')

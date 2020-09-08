@@ -4,6 +4,27 @@ from pyod.utils.utility import precision_n_scores
 from sklearn.metrics import roc_auc_score, confusion_matrix
 from time import time
 
+# Define emadModel // Temp. When emad is packaged in pip this would not be needed.
+class emadModel:
+    def __init__(self, name, clf):
+        self.name = name
+        self.clf = clf
+        self.isTrained = 'No'
+        self.n_features = 0
+        self.size=0
+        self.training_time = 0
+        self.inference_time = 0
+        self.auc = 0
+        self.pan = 0
+        self.tn = 0
+        self.fp = 0
+        self.fn = 0
+        self.tp = 0
+        self.b1 = 0
+        self.b10 = 0
+        self.b100 = 0
+        self.b1000 = 0
+
 def test_model(mod):
 
     xte = load('xte.joblib')

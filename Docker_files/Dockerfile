@@ -32,7 +32,9 @@ RUN conda install -y -c numba numba
 
 RUN conda install -y scikit-learn matplotlib pandas jupyterlab
 
-RUN pip install pyod nose -i https://www.piwheels.org/simple
+RUN pip install pyod==0.8.1 -i https://www.piwheels.org/simple
+
+RUN pip install nose -i https://www.piwheels.org/simple
 
 COPY Brotli-1.0.7-cp36-cp36m-linux_armv7l.whl Brotli-1.0.7-cp36-cp36m-linux_armv7l.whl
 

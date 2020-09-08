@@ -25,7 +25,7 @@ pip install --upgrade  pip
 conda install -y -c numba numba
 conda install -y scikit-learn matplotlib pandas
 
-# 7- Install pyod from piwheels for fast installation
+# 7- Install pyod and nose from piwheels for fast installation
 pip install pyod nose -i https://www.piwheels.org/simple
 
 # 8- Finish
